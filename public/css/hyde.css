@@ -41,10 +41,15 @@ html {
 }
 @media (min-width: 58em) {
   html {
-    font-size: 18px;
+    font-size: 16px;
   }
 }
 
+#markdown-toc {
+    list-style-type: none;
+    margin-left: 0;
+    padding-left: 0;
+}
 
 /*
  * Sidebar
@@ -58,7 +63,9 @@ html {
   padding: 2rem 1rem;
   color: rgba(255,255,255,.5);
   background-color: #222;
+  border-right: solid 1px #000;
 }
+
 @media (min-width: 48em) {
   .sidebar {
     position: fixed;
