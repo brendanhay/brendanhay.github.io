@@ -1,0 +1,18 @@
+# Dependencies
+markdown:         redcarpet
+highlighter:      pygments
+
+# Permalinks
+permalink:        pretty
+relative_permalinks: true
+
+# Setup
+title:            Brendan Hay
+url:              http://brendanhay.nz
+baseurl:          /
+
+author:
+  name:           'Brendan Hay'
+  url:            https://brendanhay.nz
+
+paginate:         5
