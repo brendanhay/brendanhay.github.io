@@ -4,8 +4,8 @@ title: Consulting Services
 ---
 
 I am currently available for consulting on large infrastructure and cloud
-deployment projects in Berlin or via a remote interface. With over 15 years of
-experience in a variety of fields, In particular I specialize in the following:
+deployment projects in Berlin or via a remote interface. With more than 15 years of
+experience across a variety of fields, in particular I specialize in the following:
 
 * Haskell
 * Large Systems Architecture
