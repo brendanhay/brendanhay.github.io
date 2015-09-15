@@ -1,10 +1,7 @@
 <div class="sidebar">
   <div class="container sidebar-sticky">
     <h3>Brendan Hay</h3>
-
     <nav class="sidebar-nav">
-      <a class="sidebar-nav-item{% if page.url == site.baseurl %} active{% endif %}" href="{{ site.baseurl }}">Home</a>
-
       {% assign pages_list = site.pages %}
       {% for node in pages_list %}
         {% if node.title != null %}
@@ -13,23 +10,15 @@
           {% endif %}
         {% endif %}
       {% endfor %}
-
       <a class="sidebar-nav-item" href="https://github.com/brendanhay">GitHub</a>
       <a class="sidebar-nav-item" href="https://linkedin.com/in/brendanhay">LinkedIn</a>
       <a class="sidebar-nav-item" href="http://hackage.haskell.org/user/BrendanHay">Hackage</a>
     </nav>
 
     <h3>Blog</h3>
-
     <nav class="sidebar-nav">
-
-      {% assign posts_list = site.posts %}
-      {% for node in posts_list %}
-        {% if node.title != null %}
-            <a class="sidebar-nav-item{% if page.url == node.url %} active{% endif %}" href="{{ node.url }}">{{ node.title }}</a>
-        {% endif %}
-      {% endfor %}
-
+      <a class="sidebar-nav-item{% if page.url == '/index.html' %} active{% endif %}" href="{{ site.baseurl }}">Home</a>
+      <a class="sidebar-nav-item{% if page.url == '/archive.html' %} active{% endif %}" href="{{ site.baseurl }}archive.html">Archive</a>
     </nav>
 
     <p class="small">&copy; {{ site.time | date: '%Y' }} Brendan Hay. All rights reserved.</p>

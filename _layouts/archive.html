@@ -1,0 +1,22 @@
+---
+layout: default
+---
+
+<div class="post">
+  <h1 class="post-title">{{ page.title }}</h1>
+  <ul id="archive">
+  {% for post in site.posts %}
+    <li>
+      <h2>{{ post.title }} <a class="archive-view" href="{{ post.url }}">View this post</a></h2>
+      <span class="post-date">{{ post.date | date_to_long_string }}</span>
+      {{ post.excerpt | truncate: 255 }}
+      <ul class="categories">
+        {% for cat in post.categories %}
+          {{ cat.index | str }}
+          <li>{{ cat }} </li>
+        {% endfor %}
+      </ul>
+    </li>
+  {% endfor %}
+  </ul>
+</div>

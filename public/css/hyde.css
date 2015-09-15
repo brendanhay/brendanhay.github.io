@@ -80,7 +80,9 @@ html {
 
 /* Sidebar links */
 .sidebar a {
-  color: #BCC8CC;
+  color: #eee;
+  text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
+  opacity: 0.5;
 }
 
 /* Sidebar nav */
@@ -115,6 +117,7 @@ a.sidebar-nav-item:focus {
 }
 
 .sidebar h3 {
+  text-shadow: 1px 1px 0px rgba(0,0,0,0.8);
   color: #eee;
   margin-top: 0;
   font-size: 1.25rem;
@@ -122,7 +125,8 @@ a.sidebar-nav-item:focus {
 
 .sidebar p.small {
     font-size: 12px;
-    color: #666;
+    color: #999;
+    opacity: 0.6;
 }
 
 
@@ -177,7 +181,50 @@ a.sidebar-nav-item:focus {
   }
 }
 
+/*
+ * Archive
+ */
 
+ul#archive {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+ul#archive li {
+    padding: 0;
+}
+
+ul#archive .post-date {
+    margin-bottom: 0.5em;
+}
+
+ul#archive h3 {
+    margin: 0;
+    display: none;
+}
+
+ul#archive .categories {
+    padding-left: 0;
+    back
+    list-style-type: none;
+}
+
+ul#archive .categories li {
+    display: inline-block;
+    padding: 0em .25em;
+    background-color: #f9f9f9;
+    color: #444;
+    border-radius: 3px;
+    border: solid 1px #eee;
+    font-size: 14px;
+}
+
+ul#archive .archive-view {
+    font-size: 14px;
+    font-weight: normal;
+    float: right;
+    color: #268bd2;
+}
 
 /*
  * Themes
