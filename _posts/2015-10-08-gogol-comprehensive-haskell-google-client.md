@@ -1,6 +1,6 @@
 ---
 layout: post
-title: More Avoidance of Real Work™
+title: Gogol Preview Release
 categories:
   - Google
   - Haskell
@@ -28,6 +28,6 @@ The libraries can be obtained from:
 * The [Google](http://hackage.haskell.org/packages/#cat:Google) category on Hackage.
 * The [source repository](https://github.com/brendanhay/gogol) on GitHub.
 
-Per usual it's a work in progress and the initial `0.0.1` release version reflects this.
-Until the surface API stabilises and more testing is done I'd very much consider this
-to be a preview or experimental release.
+It's still a work in progress and the initial `0.0.1` release version reflects
+the current production readiness. Until the surface API stabilises and more testing
+is done I'd very much consider this to be a preview or experimental release.
