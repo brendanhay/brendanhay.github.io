@@ -1,5 +1,4 @@
 ---
-published: false
 layout: post
 title: Gogol Preview Release
 categories:
@@ -7,8 +6,8 @@ categories:
   - Haskell
 ---
 
-As a continuation of my master plan to erode legitimate reasons for rejection of
-infrastructure in languages like Haskell (due to say, library availability),
+As a continuation of my master plan to erode legitimate reasons for management rejection of
+languages like Haskell (due to say, library availability),
 I'm pleased to announce the initial release of `gogol` - a Haskell suite of libraries for
 interacting with the publicly available Google Service APIs.
 These libraries are generated from the Google [Discovery Service](https://developers.google.com/discovery/)
