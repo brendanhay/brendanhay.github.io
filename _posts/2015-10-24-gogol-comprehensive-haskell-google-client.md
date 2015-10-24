@@ -18,15 +18,15 @@ interface.
 
 Due to the namespacing of the Google API and how products are aligned in the documentation,
 library names are somewhat non-intuitive. For example: The `androidpublisher`
-API endpoint is branded as the Google Play Developer API, with the Haskell library
-being `gogol-android-publisher`.  After weighing trade offs when attempting to coalesce
-the libraries into logical supersets, the end result is library naming simply reflects the
-related endpoint and the [official clients](https://github.com/google/google-api-go-client).
+API endpoint is branded as the `Google Play Developer API`, with the corresponding
+Haskell library being named `gogol-android-publisher`. This scheme follows the [official client(s)](https://github.com/google/google-api-go-client),
+and hopefully the inline Haddock links and description provide sufficient to determine
+which libraries match with what product.
 
 The libraries can be obtained from:
 
 * The [Google](http://hackage.haskell.org/packages/#cat:Google) category on Hackage.
 * The [source repository](https://github.com/brendanhay/gogol) on GitHub.
 
-Please bear in mind it's still a work in progress and I'll be working over the coming
-weeks to iron some of the rougher edges.
+Please keep in mind it's still a work in progress and I'll be working over the coming
+weeks to iron out some of the rougher edges, as well as adding more examples and documentation.
