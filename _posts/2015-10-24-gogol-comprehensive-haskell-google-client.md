@@ -20,7 +20,7 @@ Due to the namespacing of the Google API and how products are aligned in the doc
 library names are somewhat non-intuitive. For example: The `androidpublisher`
 API endpoint is branded as the `Google Play Developer API`, with the corresponding
 Haskell library being named `gogol-android-publisher`. This scheme follows the [official client(s)](https://github.com/google/google-api-go-client),
-and hopefully the inline Haddock links and description provide sufficient to determine
+and hopefully the inline Haddock links and description provided are sufficient to determine
 which libraries match with what product.
 
 The libraries can be obtained from:
