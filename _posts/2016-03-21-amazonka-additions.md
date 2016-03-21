@@ -16,4 +16,4 @@ A number of new Amazonka libraries are now available on [Hackage](http://hackage
 - [amazonka-marketplace-metering](http://hackage.haskell.org/package/amazonka-marketplace-metering) Marketplace Metering Service. ([details](https://aws.amazon.com/documentation/marketplace/))
 
 You can read the CHANGELOG for the `1.4.0` release which introduces these
-libraries [here](https://github.com/brendanhay/amazonka/blob/develop/amazonka/CHANGELOG.md).
+libraries [here](https://github.com/brendanhay/amazonka/blob/b40adae8319f18bacd2f7167c7d0f9fa3f276a14/amazonka/CHANGELOG.md).
