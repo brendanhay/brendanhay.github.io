@@ -17,4 +17,4 @@ following libraries are now available on [Hackage](http://hackage.haskell.org/pa
 - [amazonka-waf](http://hackage.haskell.org/package/amazonka-waf): Web Application Firewall Service.
 
 You can read the CHANGELOG for the `1.3.3` release which introduces these
-libraries [here](https://github.com/brendanhay/amazonka/blob/develop/amazonka/CHANGELOG.md).
+libraries [here](https://github.com/brendanhay/amazonka/blob/ffe5c378961baf68e81aa95b8b17a62b4a2b406f/amazonka/CHANGELOG.md).
