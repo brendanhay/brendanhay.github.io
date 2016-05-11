@@ -6,6 +6,7 @@ layout: default
   <h1 class="post-title">{{ page.title }}</h1>
   <ul id="archive">
   {% for post in site.posts %}
+    {% unless post.draft %}
     <li>
       <h2>{{ post.title }} <a class="archive-view" href="{{ post.url }}">View this post</a></h2>
       <span class="post-date">{{ post.date | date_to_long_string }}</span>
@@ -17,6 +18,7 @@ layout: default
         {% endfor %}
       </ul>
     </li>
+    {% endunless %}
   {% endfor %}
   </ul>
 </div>

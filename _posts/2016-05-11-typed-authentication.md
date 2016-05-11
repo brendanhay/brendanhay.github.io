@@ -1,10 +1,7 @@
 ---
 draft: true
-published: false
 layout: post
 title: Typed Authentication
-tags:
-  - draft
 ---
 
 > **DRAFT**
