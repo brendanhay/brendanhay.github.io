@@ -83,19 +83,19 @@ and obtain the client-id and client-secret, which will look something like:
 We'll use InstalledApplication since it doesn't require running a local HTTP server
 to receive the OAuth callback like the Web Server Application flow.
 
-```yaml
+{% highlight yaml %}
 client-id: 1234567890.dns.apps.googleusercontent.com
 client-secret: aXfvg40-_Splqf349fZtvn
-```
+{% endhighlight %}
 
 This will be represented in Haskell as:
 
-```haskell
+{% highlight haskell %}
 data Client = Client
     { identifier :: ByteString
     , secret     :: ByteString
     }
-```
+{% endhighlight %}
 
 # An Oversimplification of the Domain
 
@@ -122,19 +122,19 @@ operations have large numbers of parameters, passing only the required parameter
 to a smart constructor which instantiates an underlying data type by setting
 default and optional parameters proves more manageable. See Gogol + Amazonka examples.
 
-```haskell
+{% highlight haskell %}
 newtype Bucket = Bucket ByteString deriving (Eq, Show, IsString)
 newtype Key    = Key    ByteString deriving (Eq, Show, IsString)
 
 data InsertObject = InsertObject Bucket Key RequestBody
-```
+{% endhighlight %}
 
 Each operation will be an HTTP request to the `www.googleapis.com/storage/v1` endpoint
 and will return a streaming HTTP response upon success.
 
-```haskell
+{% highlight haskell %}
 
-```
+{% endhighlight %}
 
 # The Simple Version
 
@@ -143,20 +143,20 @@ Specify credentials by passing scopes to form a url, and exchange that for a cod
 
 The scopes will be represented by newtypes:
 
-```haskell
+{% highlight haskell %}
 newtype Scope = Scope ByteString deriving (Eq, Show, IsString)
 
 fullControl, readOnly, readWrite :: Scope
 fullControl = "https://www.googleapis.com/auth/devstorage.full_control"
 readOnly    = "https://www.googleapis.com/auth/devstorage.read_only"
 readWrite   = "https://www.googleapis.com/auth/devstorage.read_write"
-```
+{% endhighlight %}
 
 To obtain an OAuth code that can be exchanged for an access token per the
 Web Server Application flow, we first convert the list of scopes that we
 wish the user to authorise to a query string:
 
-```haskell
+{% highlight haskell %}
 queryEncodeScopes :: [Scope] -> ByteString
 queryEncodeScopes =
       Build.toLazyByteString
@@ -164,7 +164,7 @@ queryEncodeScopes =
     . intersperse "+"
     . map (HTTP.urlEncodeBuilder True . LBS.toStrict)
     . coerce
-```
+{% endhighlight %}
 
 > `Data.Coerce.coerce` is used here to safely un-newtype the list of scopes to their
 underlying bytestring. More detail.
@@ -172,7 +172,7 @@ underlying bytestring. More detail.
 Then, the `Client` identifier can be used to form a URL that the user will be
 directed to, to confirm authorisation of the desired scopes:
 
-```haskell
+{% highlight haskell %}
 formURL :: Client -> [Scope] -> ByteString
 formURL c ss =
        "https://accounts.google.com/o/oauth2/token"
@@ -180,13 +180,13 @@ formURL c ss =
     <> "&redirect_uri=" <> redirectURI
     <> "&client_id="    <> identifier c
     <> "&scope="        <> queryEncodeScopes ss
-```
+{% endhighlight %}
 
 Pasting the URL created by `formURL` into your browser, will prompt you to authorise
 the specified scopes for the given client identifier. Confirming this will display
 an OAuth code that can be copied and pasted back into our toy application:
 
-```haskell
+{% highlight haskell %}
 newtype Code = Code  ByteString deriving (Eq, Show, IsString)
 
 redirectPrompt :: Client -> [Scope] -> IO Code
@@ -199,11 +199,11 @@ redirectPrompt c ss = do
         _        -> putStrLn "Unsupported OS" >> exitFailure
     putStrLn "Please input the authorisation code: "
     Code . LBS.fromStrict <$> BS.getLine
-```
+{% endhighlight %}
 
 This code can then be used to obtain a valid access token:
 
-```haskell
+{% highlight haskell %}
 newtype Token = Token ByteString
 
 exchangeCode :: Client -> Manager -> Code -> IO Token
@@ -226,7 +226,7 @@ exchangeCode c m (Code code) =
                 <> "&code="          <> code
                 <> "&redirect_uri="  <> redirectURI
         }
-```
+{% endhighlight %}
 
 Now we have a valid access token authorised to the desired scopes, we can make
 actual API requests.
@@ -236,14 +236,14 @@ actual API requests.
 To provide a uniform interface for serialisation of our operation datatypes
 into HTTP requests, a simplistic typeclass is introduced:
 
-```haskell
+{% highlight haskell %}
 class ToRequest a where
     toRequest :: a -> Request
-```
+{% endhighlight %}
 
 And a `ReaderT` is used to pass around the environment:
 
-```haskell
+{% highlight haskell %}
 data Env = Env
     { client  :: Client
     , token   :: Token
@@ -254,19 +254,19 @@ type Context = ReaderT Env IO
 
 runContext :: Client -> Token -> Manager -> Context a -> IO a
 runContext c t m = flip runReaderT (Env c t m)
-```
+{% endhighlight %}
 
 `Context` and `ToRequest` are then combined to provide a uniform interface to
 send our operation data types and receive a raw HTTP response for `2xx` status codes:
 
-```haskell
+{% highlight haskell %}
 send :: ToRequest a => a -> Context (Response ByteString)
 send x = asks manager >>= lift . Client.httpLbs (toRequest x)
-```
+{% endhighlight %}
 
 For example:
 
-```haskell
+{% highlight haskell %}
 example :: Client -> Code -> IO ()
 example c code = do
     m <- Client.newManager Client.defaultManagerSettings
@@ -279,7 +279,7 @@ example c code = do
 
         void . send $ InsertObject bucket key payload
         void . send $ GetObject    bucket key
-```
+{% endhighlight %}
 
 If we run the above example - how would we know the `Code` used was authorised
 with the correct scopes for all three operations above? That is, either `fullControl`
@@ -294,16 +294,16 @@ how can we ensure the user is prompted with the correct scopes to authorise?
 Firstly, we'll make a modification to the `ToRequest` class to annotate each request
 with its respective scopes:
 
-```haskell
+{% highlight haskell %}
 class ToRequest a where
     type Scopes = [Symbol]
 
     toRequest :: a -> Request
-```
+{% endhighlight %}
 
 This results in:
 
-```haskell
+{% highlight haskell %}
 instance ToRequest InsertObject where
     type Scopes InsertObject =
         '[ "https://www.googleapis.com/auth/devstorage.read_write"
@@ -323,7 +323,7 @@ instance ToRequest DeleteObject where
         '[ "https://www.googleapis.com/auth/devstorage.full_control"
          ]
     ...
-```
+{% endhighlight %}
 
 The associated type-level list of symbols is used to represent a 'set' of scopes,
 of which _one_ (preferrably with the least privilege) is required.
@@ -336,7 +336,7 @@ that were used to form the authorisation URL.
 
 This parameter is introduced trivially, as:
 
-```haskell
+{% highlight haskell %}
 newtype Token s = Token ByteString
 
 data Env s = Env
@@ -349,11 +349,11 @@ type Context s = ReaderT (Env s) IO
 
 runContext :: Env s -> Context s a -> IO a
 runContext = flip runReaderT
-```
+{% endhighlight %}
 
 And a class is introduced to retrieve the scopes from our parameterised kind, `k -> *`:
 
-```haskell
+{% highlight haskell %}
 class GetScopes a where
     getScopes :: proxy a -> [Scope]
 
@@ -364,15 +364,15 @@ instance (KnownSymbol x, GetScopes xs) => GetScopes (x ': xs) where
     getScopes _ = scope (Proxy :: Proxy x) : getScopes (Proxy :: Proxy xs)
       where
         scope = Scope . LBS8.pack . symbolVal
-```
+{% endhighlight %}
 
 This changes the signatures used to do the OAuth danse macabre to:
 
-```haskell
+{% highlight haskell %}
 formURL        :: GetScopes s => Client -> Proxy s            -> ByteString
 redirectPrompt :: GetScopes s => Client                       -> IO (Code  s)
 exchangeCode   ::                Client -> Code  s -> Manager -> IO (Token s)
-```
+{% endhighlight %}
 
 # Ensuring Correspondence
 
@@ -389,7 +389,7 @@ supported scopes is not empty.
 
 This can be achieved by testing if the supplied scope `a` is a member of the set `s`:
 
-```haskell
+{% highlight haskell %}
 type family HasScope (s :: [Symbol]) a :: Constraint where
     HasScope s a = (s `HasScope'` Scopes a) ~ 'True
 
@@ -400,18 +400,18 @@ type family HasScope' s a where
 type family (∈) a b where
     (∈) x '[]       = 'False
     (∈) x (y ': xs) = x == y || x ∈ xs
-```
+{% endhighlight %}
 
 The result of `HasScope` is a `Constraint`, which can be used directly on `send`:
 
-```haskell
+{% highlight haskell %}
 send :: (ToRequest a, HasScope s a) => a -> Context s (Response ByteString)
 send x = asks manager >>= lift . Client.httpLbs (toRequest x)
-```
+{% endhighlight %}
 
 This updates the example to:
 
-```haskell
+{% highlight haskell %}
 exampleReadWrite :: Client -> IO ()
 exampleReadWrite c = do
     m <- Client.newManager Client.defaultManagerSettings
@@ -427,14 +427,14 @@ exampleReadWrite c = do
 
         void . send $ InsertObject bucket key payload
         void . send $ GetObject    bucket key
-```
+{% endhighlight %}
 
 If an overly restrictive annotation is used, say `Env '[ReadOnly]`, the following
 error will occur during compilation:
 
-```haskell
+{% highlight haskell %}
 ...
-```
+{% endhighlight %}
 
 # Future Improvements (Give Me a Lift in Your Delorean)
 

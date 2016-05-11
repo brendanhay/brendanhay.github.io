@@ -1,24 +1,18 @@
 gems:
   - jekyll-paginate
-
 # Dependencies
 kramdown:
   input: GFM
   hard_wrap: false
-
 # Permalinks
 permalink:        pretty
-
 # Setup
 name:             Brendan Hay
 title:            Brendan Hay
 url:              http://brendanhay.nz
 baseurl:          /
-
 author:
   name:           'Brendan Hay'
   url:            https://brendanhay.nz
-
 paginate:         5
-
 permalink:        ':title'
