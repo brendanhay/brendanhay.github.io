@@ -4,9 +4,23 @@ layout: post
 title: Typed Authorisation Scopes
 ---
 
-# DRAFT
+**DRAFT**
 
-> Example project here: https://github.com/brendanhay/brendanhay.github.io/tree/master/projects/typed-authentication
+This post explores a small example of using Haskell's type system, specifically
+[data type promotion](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#ghc-flag--XDataKinds),
+[type-level literals](singletons), and
+[type-level lists](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#promoted-list-and-tuple-types))
+to implement compile-time checks that your supplied Google's OAuth2 credentials
+have the required authorisation scopes for a particular monadic context.
+
+Various assumptions about you, the reader, include familiarity with
+Google's Services, Haskell and general HTTP API communication are made.
+
+> You can find the entire code example as a runnable [stack](http://docs.haskellstack.org/) project [here](https://github.com/brendanhay/brendanhay.github.io/tree/master/projects/typed-authentication).
+This is a minimal version of what will be released as part of
+[gogol-0.2](http://hackage.haskell.org/package/gogol).
+
+# Status Quo
 
 Previously in the [`gogol`](http://hackage.haskell.org/packages/#cat:Google)
 libraries, you would supply the credentials to the top-level
@@ -17,8 +31,11 @@ monad) and any remote API operations performed within that context would be
 assumed to have the correct scopes authorised, otherwise a run-time error from
 the remote API denoting forbidden or invalid access-levels would be raised.
 
-A contrived example of this usage for storing/retrieving the same object to
-Google Storage is:
+> A short introduction to Google's use of OAuth2 can be read at the [bottom of this
+article](#aside-googles-use-of-oauth2).
+
+A contrived example of this usage for storing/retrieving the same object with
+the Google Cloud Storage API (referred to herein as Google Storage) is:
 
 {% highlight haskell %}
 {-# LANGUAGE OverloadedStrings #-}
@@ -42,89 +59,62 @@ main = do
     body <- sourceBody file
 
     runResourceT . runGoogle env $ do
-        _ <- upload   (objectsInsert bkt obj & oiName ?~ key) bdy
+        -- Perform a remote 'ObjectsInsert' call, requiring at minimum the
+        -- "https://www.googleapis.com/auth/devstorage.read_write" scope.
+        _ <- upload (objectsInsert bkt obj & oiName ?~ key) bdy
+
+        -- Perform a remote 'ObjectsGet' call, requiring at minimum the
+        -- "https://www.googleapis.com/auth/devstorage.read_only" scope.
         _ <- download (objectsGet bkt key)
+
         pure ()
 {% endhighlight %}
 
-The problem with this approach is when the credentials are retrieved
-via `newEnv` (calling the underlying [`getAuth`](https://github.com/brendanhay/gogol/blob/0.0.1/gogol/src/Network/Google/Auth.hs#L203-L217))
-there is no check for correspondence between the scopes the code within the `runGoogle` context
-requires, and the discovered credentials.
+The problem with this approach is when the credentials are retrieved via
+`newEnv` (calling the underlying
+[getAuth](https://github.com/brendanhay/gogol/blob/0.0.1/gogol/src/Network/Google/Auth.hs#L203-L217))
+there is no assurance that the code within the `runGoogle` context has the required
+scopes authorised. If new credentials were created through the Google Developer
+Console and we failed to authorise any scopes for Google Storage, when attempting
+to run the above example a runtime error would occur.
 
 Ryan Newton
 [raised the idea](https://github.com/brendanhay/gogol/issues/7#issuecomment-151133749)
-that having strongly typed scopes could mitigate invalid credentials, or at
+that having strongly typed scopes could mitigate some classes of invalid credentials, or at
 least self-document the authorisation requirements a particular segment of
-code has. This post explores a small example of using the type system, specifically [data type promotion](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#ghc-flag--XDataKinds), [type-level literals](singletons), and [type-level lists](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#promoted-list-and-tuple-types)) to implement a simpler
-version of what will be released as part of [`gogol-0.2`](http://hackage.haskell.org/package/gogol).
+code has.
 
-Various assumptions about you, the reader, include familiarity with
-Google's Services, Haskell and general HTTP API communication are made.
+# An Oversimplification of the Domain
 
-# Google's Use of OAuth
+To illustrate usage of OAuth scopes for authorization purposes, we'll use a
+faux Google Storage API. This simplified API will have 3 operations, each requiring a different scope:
 
-Google secures their public facing APIs using [OAuth2](https://developers.google.com/identity/protocols/OAuth2).
+* **GetObject** - Retrieve an existing object. (Addressed by storage bucket and object key.)
+  - `"https://www.googleapis.com/auth/devstorage.read_only"`
+  - `"https://www.googleapis.com/auth/devstorage.full_control"`
+* **InsertObject** - Writes a new object.
+  - `"https://www.googleapis.com/auth/devstorage.read_write"`
+  - `"https://www.googleapis.com/auth/devstorage.full_control"`
+* **DeleteObject** - Remove an existing object.
+  - "https://www.googleapis.com/auth/devstorage.full_control"`
 
-In all our examples we'll be using the [Installed Application](https://developers.google.com/identity/protocols/OAuth2InstalledApp) flow since it is
-identical to the [Web Server Application](https://developers.google.com/identity/protocols/OAuth2WebServer) flow and doesn't require us to serve
-callback URI.
+The 'real' Google Storage API accepts [multipart/related](https://tools.ietf.org/html/rfc2387) content-type
+where object metadata and payload are sent in a delimited multipart stream. An `Accept` header
+can then be used to retrieve either the metadata or payload using the same object key.
 
-Of particular note is how OAuth scopes are used to break up permissions
-required to perform the various operations that the APIs expose. For example,
-if one wished to programmatically read an object stored in Google Storage
-you would required the following OAuth scope to be authorised for the credentials
-that are used to authenticate with the API:
+For our example, we'll just assume a streaming payload with no metadata where each
+operation address an storage bucket and object prefix/key.
 
-{% highlight haskell %}
-"https://www.googleapis.com/auth/devstorage.read_only"
-{% endhighlight %}
+## Credentials
 
-If an attempt was made to write an object to Google Storage and the credentials
-used only had the above scope, an authorisation error would occur.
+Our faux API's authentication and authorisation will model the real API as closely
+as possible. We'll assume credentials were created in the [Google Developers Console](https://console.developers.google.com/apis/credentials)
+via **Create credentials** > **OAuth client ID** > **Other**, which results
+in a generated client identifier and secret:
 
-To allow write access (which naturally permits read access), the following scope
-would be used:
+<img src="/public/images/typed-authentication/credentials.png" />
 
-{% highlight haskell %}
-"https://www.googleapis.com/auth/devstorage.read_write"
-{% endhighlight %}
-
-And likewise, to perform further administrative operations on metadata and buckets
-you would required the administrative scope:
-
-{% highlight haskell %}
-"https://www.googleapis.com/auth/devstorage.full_control"
-{% endhighlight %}
-
-Each of these scopes permits the previous, that is, they are a hierarchy of permissions.
-
-For each API, Google exposes a number of differing scopes that allow granular control
-over the operations an API client can perform.
-
-It is generally a best practice to request scopes incrementally, at the time
-access is required, rather than up front. For example, an app that wants to
-support purchases should not request Google Wallet access until the user
-presses the “buy” button; see Incremental authorization.
-
-
-
-
-
-The credentials for the Web Service Application would work like ..
-
-Create web application credentials for your project in the Developers Console
-and obtain the client-id and client-secret, which will look something like:
-
-We'll use InstalledApplication since it doesn't require running a local HTTP server
-to receive the OAuth callback like the Web Server Application flow.
-
-{% highlight yaml %}
-client-id: 1234567890.dns.apps.googleusercontent.com
-client-secret: aXfvg40-_Splqf349fZtvn
-{% endhighlight %}
-
-This will be represented in Haskell as:
+We will represent this client information in Haskell as the following data type:
 
 {% highlight haskell %}
 data Client = Client
@@ -133,51 +123,47 @@ data Client = Client
     }
 {% endhighlight %}
 
-# An Oversimplification of the Domain
+> The **Other** credentials type is used so we do not have to serve a callback URI
+to obtain the authorisation code.
 
-To illustrate the use of OAuth scopes for authorization purposes, we'll use a
-faux Google Cloud Storage API (Google Storage).
+## Operations
 
-The simplified API will have 3 operations, each requiring a different scope:
-
-* InsertObject
-  - Write a new object payload, addressed by a storage bucket and key.
-  - `https://www.googleapis.com/auth/devstorage.read_write` or `https://www.googleapis.com/auth/devstorage.full_control`
-  - The actual Google Storage API accepts `multipart/related` Content-Type, with
-    object metadata and payload sent in a delimited multipart stream.
-* GetObject
-  - Retrieve an existing object, via bucket and key.
-  - `https://www.googleapis.com/auth/devstorage.read_only` or `https://www.googleapis.com/auth/devstorage.full_control`
-* DeleteObject
-  - remove an existing object, via bucket and key.
-  - `https://www.googleapis.com/auth/devstorage.full_control`
-
-These operations will be represented by concrete data types, which, for this
-trivial example is overkill compared to a function per operation. In an API where
-operations have large numbers of parameters, passing only the required parameters
-to a smart constructor which instantiates an underlying data type by setting
-default and optional parameters proves more manageable. See Gogol + Amazonka examples.
+The common parameters for each operation can be modelled as newtypes with a
+utility function `objectPath` to encode the full Google Storage path to an object
+relative to the `https://www.googleapis.com` host:
 
 {% highlight haskell %}
 newtype Bucket = Bucket ByteString deriving (Eq, Show, IsString)
 newtype Key    = Key    ByteString deriving (Eq, Show, IsString)
 
-data InsertObject = InsertObject Bucket Key RequestBody
+objectPath :: Bucket -> Key -> BS.ByteString
+objectPath (Bucket bkt) (Key key) =
+    LBS.toStrict ("storage/v1/b/" <> bkt <> "/o/" <> key)
 {% endhighlight %}
 
-Each operation will be an HTTP request to the `www.googleapis.com/storage/v1` endpoint
-and will return a streaming HTTP response upon success.
+Then for each operation, we'll declare a data type that represents the parameters
+that will be sent to the `www.googleapis.com/storage/v1` API endpoint as part
+of an HTTP request:
 
 {% highlight haskell %}
-
+data InsertObject = InsertObject Bucket Key RequestBody
+data GetObject    = GetObject    Bucket Key
+data DeleteObject = DeleteObject Bucket Key
 {% endhighlight %}
 
-# The Simple Version
+Each operation is assumed to return a streaming HTTP response upon success.
 
-Specify credentials by passing scopes to form a url, and exchange that for a code
+> For this contrived example it could be considered overkill defining a data
+type instead of a function per operation.  However, in an API where operations
+have large numbers of parameters, passing only required parameters to
+a smart constructor and defaulting the rest proves more palatable. A real-world example of this can
+be found
+[here](https://github.com/brendanhay/gogol/blob/0.0.1/gogol-container/gen/Network/Google/Resource/Container/Projects/Zones/Clusters/Create.hs#L80-L143).
 
+## Scopes
 
-The scopes will be represented by newtypes:
+Similarly, an OAuth2 scope and the specific set we require for our faux Google Storage API
+can be represented as:
 
 {% highlight haskell %}
 newtype Scope = Scope ByteString deriving (Eq, Show, IsString)
@@ -188,11 +174,26 @@ readOnly    = "https://www.googleapis.com/auth/devstorage.read_only"
 readWrite   = "https://www.googleapis.com/auth/devstorage.read_write"
 {% endhighlight %}
 
-To obtain an OAuth code that can be exchanged for an access token per the
-Web Server Application flow, we first convert the list of scopes that we
-wish the user to authorise to a query string:
+To perform HTTP requests against the remote API an `Authorization`
+header containing a valid access token is required. This access token denotes
+that we are operating on behalf of the client identified by our
+[credentials](#credentials) for some authorised set of scopes.
+
+This is done by firstly prompting the user to authorise desired scopes, yielding an
+authorisation code. This authorisation code can then be exchanged along with our
+credentials' secret to obtain an access token. You can read more about this particular OAuth2 flow [here](https://developers.google.com/identity/protocols/OAuth2InstalledApp).
+
+Firstly, to obtain the authorisation code we encode the scopes into a URL:
 
 {% highlight haskell %}
+formURL :: Client -> [Scope] -> ByteString
+formURL c ss =
+       "https://accounts.google.com/o/oauth2/auth"
+    <> "?response_type=code"
+    <> "&redirect_uri=" <> redirectURI
+    <> "&client_id="    <> identifier c
+    <> "&scope="        <> queryEncodeScopes ss
+
 queryEncodeScopes :: [Scope] -> ByteString
 queryEncodeScopes =
       Build.toLazyByteString
@@ -202,28 +203,16 @@ queryEncodeScopes =
     . coerce
 {% endhighlight %}
 
-> `Data.Coerce.coerce` is used here to safely un-newtype the list of scopes to their
-underlying bytestring. More detail.
-
-Then, the `Client` identifier can be used to form a URL that the user will be
-directed to, to confirm authorisation of the desired scopes:
-
-{% highlight haskell %}
-formURL :: Client -> [Scope] -> ByteString
-formURL c ss =
-       "https://accounts.google.com/o/oauth2/token"
-    <> "?response_type=code"
-    <> "&redirect_uri=" <> redirectURI
-    <> "&client_id="    <> identifier c
-    <> "&scope="        <> queryEncodeScopes ss
-{% endhighlight %}
-
 Pasting the URL created by `formURL` into your browser, will prompt you to authorise
-the specified scopes for the given client identifier. Confirming this will display
-an OAuth code that can be copied and pasted back into our toy application:
+the specified scopes for the given client identifier:
+
+<img src="/public/images/typed-authentication/authorisation.png" />
+
+Clicking **Allow** will display an OAuth code that can be copied and pasted back into our toy application
+via the following data type and a simple `IO` helper using `getLine`:
 
 {% highlight haskell %}
-newtype Code = Code  ByteString deriving (Eq, Show, IsString)
+newtype Code = Code ByteString deriving (Eq, Show, IsString)
 
 redirectPrompt :: Client -> [Scope] -> IO Code
 redirectPrompt c ss = do
@@ -237,7 +226,8 @@ redirectPrompt c ss = do
     Code . LBS.fromStrict <$> BS.getLine
 {% endhighlight %}
 
-This code can then be used to obtain a valid access token:
+This `Code` can then be exchanged along with the `Client` secret to obtain a
+valid access token:
 
 {% highlight haskell %}
 newtype Token = Token ByteString
@@ -253,7 +243,8 @@ exchangeCode c m (Code code) =
         , Client.method         = "POST"
         , Client.path           = "/o/oauth2/token"
         , Client.requestHeaders =
-            [(HTTP.hContentType, "application/x-www-form-urlencoded")]
+            [ (HTTP.hContentType, "application/x-www-form-urlencoded")
+            ]
         , Client.requestBody    =
             RequestBodyLBS $
                    "grant_type=authorization_code"
@@ -264,32 +255,56 @@ exchangeCode c m (Code code) =
         }
 {% endhighlight %}
 
-Now we have a valid access token authorised to the desired scopes, we can make
-actual API requests.
+The `Token` can then be added to an HTTP `Request` by inserting the `Authorization` header:
 
-# A Basic Request Environment
+{% highlight haskell %}
+authorise :: Token -> Request -> Request
+authorise (Token t) rq = rq
+    { requestHeaders =
+        (HTTP.hAuthorization, "Bearer: " <> t)
+            : filter ((HTTP.hAuthorization /=) . fst) (requestHeaders rq)
+    }
+{% endhighlight %}
+
+Assuming the planets align and horrors of the internet lie dormant, we now have a
+valid access token to perform API requests for the authorised scopes.
+
+# Common Request Context and Environment
+
+.. this adhoc overloading is improper - what about laws etc?
 
 To provide a uniform interface for serialisation of our operation datatypes
-into HTTP requests, a simplistic typeclass is introduced:
+into HTTP requests, a typeclass is introduced and an instance for each operation
+is defined:
 
 {% highlight haskell %}
 class ToRequest a where
     toRequest :: a -> Request
+
+instance ToRequest GetObject where
+    toRequest (GetObject bkt key) =
+        def { Client.method = "GET"
+            , Client.path   = objectPath bkt key
+            }
+...
 {% endhighlight %}
 
-And a `ReaderT` is used to pass around the environment:
+Performing HTTP requests using [http-client](#) requires the use of a
+connection manager. This `Manager` and the valid exchanged `Token` will be used
+to send a request containing the operation parameters and some additional
+authentication information. This common environment can be made available through
+use of a `ReaderT` to keep things tidy:
 
 {% highlight haskell %}
 data Env = Env
-    { client  :: Client
-    , token   :: Token
+    { token   :: Token
     , manager :: Manager
     }
 
 type Context = ReaderT Env IO
 
-runContext :: Client -> Token -> Manager -> Context a -> IO a
-runContext c t m = flip runReaderT (Env c t m)
+runContext :: Env -> Context a -> IO a
+runContext = flip runReaderT
 {% endhighlight %}
 
 `Context` and `ToRequest` are then combined to provide a uniform interface to
@@ -297,10 +312,13 @@ send our operation data types and receive a raw HTTP response for `2xx` status c
 
 {% highlight haskell %}
 send :: ToRequest a => a -> Context (Response ByteString)
-send x = asks manager >>= lift . Client.httpLbs (toRequest x)
+send x = do
+    m <- asks manager
+    t <- asks token
+    lift $ Client.httpLbs (authorise t (toRequest x)) m
 {% endhighlight %}
 
-For example:
+When then tyes nicely into the following example:
 
 {% highlight haskell %}
 example :: Client -> Code -> IO ()
@@ -317,10 +335,10 @@ example c code = do
         void . send $ GetObject    bucket key
 {% endhighlight %}
 
-If we run the above example - how would we know the `Code` used was authorised
-with the correct scopes for all three operations above? That is, either `fullControl`
-or both `readOnly` and `readWrite` should have been authorised by the user or
-an authorisation error will occur at runtime when communicating with the remote API.
+One question we still haven't answered from the introduction is - how would we know the `Code` used
+was authorised with the correct scopes for all three operations above? That is, either `fullControl`
+*or* both `readOnly` and `readWrite` should have been authorised else
+an error will occur when the example is run.
 
 # Annotating Requests with Required Scopes
 
@@ -365,7 +383,7 @@ The associated type-level list of symbols is used to represent a 'set' of scopes
 of which _one_ (preferrably with the least privilege) is required.
 
 
-# Promoting Scopes
+# Promotion of Scopes
 
 .. by Parameterising the `Token`, `Env`, and `Context` over the list of scopes
 that were used to form the authorisation URL.
@@ -472,6 +490,11 @@ error will occur during compilation:
 ...
 {% endhighlight %}
 
+
+
+> Note about the additional supported credential types in the `gogol-0.2` release.
+
+
 # Future Improvements (Give Me a Lift in Your Delorean)
 
 Having to explicitly annotate `Env` with the set of scopes seems superfluous, it'd
@@ -484,3 +507,51 @@ improvement.
 
 
 # TL;DR
+
+
+# Aside: Google's Use of OAuth2
+
+Google secures their public facing APIs using [OAuth2](https://developers.google.com/identity/protocols/OAuth2).
+
+In all our examples we'll be using the [Installed Application](https://developers.google.com/identity/protocols/OAuth2InstalledApp) flow since it is
+identical to the [Web Server Application](https://developers.google.com/identity/protocols/OAuth2WebServer) flow and doesn't require us to serve
+callback URI.
+
+Of particular note is how OAuth scopes are used to break up permissions
+required to perform the various operations that the APIs expose. For example,
+if one wished to programmatically read an object stored in Google Storage
+you would required the following OAuth scope to be authorised for the credentials
+that are used to authenticate with the API:
+
+{% highlight haskell %}
+"https://www.googleapis.com/auth/devstorage.read_only"
+{% endhighlight %}
+
+If we made an attempt to write an object to Google Storage, we'd get an authorisation error
+If an attempt was made to write an object to Google Storage and the credentials
+used only had the above scope, an authorisation error would occur.
+
+To allow write access (which naturally permits read access), the following scope
+would be used:
+
+{% highlight haskell %}
+"https://www.googleapis.com/auth/devstorage.read_write"
+{% endhighlight %}
+
+And likewise, to perform further administrative operations on metadata and buckets
+we would require the administrative scope:
+
+{% highlight haskell %}
+"https://www.googleapis.com/auth/devstorage.full_control"
+{% endhighlight %}
+
+Each of these scopes permits the previous, that is, they are typically hierarchial permissions.
+
+For each API, Google exposes a number of differing scopes that allow granular control
+over the operations an API client can perform.
+
+> It is generally a best practice to request scopes incrementally, at the time
+access is required, rather than up front. For example, an app that wants to
+support purchases should not request Google Wallet access until the user
+presses the “buy” button; see Incremental authorization. This is not (yet) handled
+by `gogol`.
