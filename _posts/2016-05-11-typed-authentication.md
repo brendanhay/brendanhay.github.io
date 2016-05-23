@@ -1,49 +1,102 @@
 ---
 draft: true
-published: false
 layout: post
-title: Typed Authentication
+title: Typed Authorisation Scopes
 ---
-
-> **DRAFT**
 
 > Example project here: https://github.com/brendanhay/brendanhay.github.io/tree/master/projects/typed-authentication
 
-This post is a simplification of an approach used in the gogol libraries to
-assist in the use of the cthulhic horror that is OAuth.
+Previously in the [`gogol`](http://hackage.haskell.org/packages/#cat:Google)
+libraries, you would supply the credentials to the top-level
+[`runGoogle`](https://github.com/brendanhay/gogol/blob/0.0.1/gogol/src/Network/Google.hs#L174-L176)
+function (which unwraps the
+[`Google`](https://github.com/brendanhay/gogol/blob/0.0.1/gogol/src/Network/Google.hs#L119)
+monad) and any remote API operations performed within that context would be
+assumed to have the correct scopes authorised, otherwise a runtime error from
+the remote API denoting forbidden or invalid access-levels would be raised.
+
+A contrived example of this usage for uploading/downling the same object to
+Google Storage is:
+
+{% highlight haskell %}
+import Control.Lens                 ((?~))
+import Control.Monad.Trans.Resource (runResourceT)
+import Data.Function                ((&))
+import Network.Google               (runGoogle, newEnv, sourceBody)
+import Network.Google.Storage       (objectsGet, objectsInsert, oiName)
+
+main :: IO
+main = do
+    let file = "/tmp/file-path.xz"
+        key  = Text.pack file
+        obj  = object' & objContentType ?~ "application/octet-stream"
+        bkt  = "storage-bucket"
+
+    -- Which credentials are retrieved is determined identically
+    -- to the other Google SDKs by the following 'newEnv' call:
+    env  <- newEnv -- Credentials are retrieved here.
+    body <- sourceBody file
+
+    runResourceT . runGoogle env $ do
+        _ <- upload   (objectsInsert bkt obj & oiName ?~ key) bdy
+        _ <- download (objectsGet bkt key)
+        pure ()
+{% endhighlight %}
+
+The problem with this approach is when the credentials are retrieved
+via `newEnv` (calling the underlying [`getAuth`](https://github.com/brendanhay/gogol/blob/0.0.1/gogol/src/Network/Google/Auth.hs#L203-L217))
+there is no check for correspondence between the scopes the code within the `runGoogle` context
+requires, and the discovered credentials.
+
+Ryan Newton
+[raised the idea](https://github.com/brendanhay/gogol/issues/7#issuecomment-151133749)
+that having strongly typed scopes could mitigate invalid credentials, or at
+least self-document the authorisation requirements a particular segment of
+code has. This post explores a small example of using the type system, specifically [data type promotion](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#ghc-flag--XDataKinds), [type-level literals](singletons), and [type-level lists](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#promoted-list-and-tuple-types)) to implement a simpler
+version of what will be released as part of [`gogol-0.2`](http://hackage.haskell.org/package/gogol).
 
 Various assumptions about you, the reader, include familiarity with
-Haskell and general HTTP API communication.
-
-# What Is This OAuth You Speak Of?
-
-- Background
-- Terminology, scopes
-
-AuthN vs AuthZ and Pseudo-Authentication? Or just focus on the AuthZ aspects
-for brevity.
-
-Going to gloss over OAuth and Google's usage of it.
-
-
+Google's Services, Haskell and general HTTP API communication are made.
 
 # Google's Use of OAuth
 
-Obtain OAuth 2.0 credentials from the Google Developers Console.
+Google secures their public facing APIs using [OAuth2](https://developers.google.com/identity/protocols/OAuth2).
 
-The set of values varies based on what type of application you are
-building. For example, a JavaScript application does not require a secret, but
-a web server application does.
+In all our examples we'll be using the [Installed Application](https://developers.google.com/identity/protocols/OAuth2InstalledApp) flow since it is
+identical to the [Web Server Application](https://developers.google.com/identity/protocols/OAuth2WebServer) flow and doesn't require us to serve
+callback URI.
 
-A single access token can grant varying degrees of access to multiple APIs. A
-variable parameter called scope controls the set of resources and operations
-that an access token permits. During the access-token request, your application
-sends one or more values in the scope parameter.
+Of particular note is how OAuth scopes are used to break up permissions
+required to perform the various operations that the APIs expose. For example,
+if one wished to programmatically read an object stored in Google Storage
+you would required the following OAuth scope to be authorised for the credentials
+that are used to authenticate with the API:
 
-Some requests require an authentication step where the user logs in with their
-Google account. After logging in, the user is asked whether they are willing to
-grant the permissions that your application is requesting. This process is
-called user consent.
+{% highlight haskell %}
+"https://www.googleapis.com/auth/devstorage.read_only"
+{% endhighlight %}
+
+If an attempt was made to write an object to Google Storage and the credentials
+used only had the above scope, an authorisation error would occur.
+
+To allow write access (which naturally permits read access), the following scope
+would be used:
+
+{% highlight haskell %}
+"https://www.googleapis.com/auth/devstorage.read_write"
+{% endhighlight %}
+
+And likewise, to perform further administrative operations on metadata and buckets
+you would required the administrative scope:
+
+{% highlight haskell %}
+"https://www.googleapis.com/auth/devstorage.full_control"
+{% endhighlight %}
+
+Each of these scopes permits the previous, that is, they are a hierarchy of permissions.
+
+For each API, Google exposes a number of differing scopes that allow granular control
+over the operations an API client can perform.
 
 It is generally a best practice to request scopes incrementally, at the time
 access is required, rather than up front. For example, an app that wants to
@@ -51,29 +104,7 @@ support purchases should not request Google Wallet access until the user
 presses the “buy” button; see Incremental authorization.
 
 
-Web Server Applications:
-The authorization sequence begins when your application redirects a browser to
-a Google URL; the URL includes query parameters that indicate the type of
-access being requested. Google handles the user authentication, session
-selection, and user consent. The result is an authorization code, which the
-application can exchange for an access token and a refresh token.
 
-Installed Applications:
-Applications that are installed on devices such as computers, mobile devices, and tablets.
-Flow is identical to Web Service Applications.
-
-Client-side Applications:
-JavaScript Applications that run in a user's browser.
-
-Limited Input Devices:
-Video Game Consoles, Cameras, Printers etc.
-
-Service Accounts:
-Server-to-server communication where identity is proven but no additional
-consent is needed, such as a compute instance talking to the Google Cloud Storage APIs.
-
-Focusing on the Web Service Application scenario, although Service Accounts would
-also be suitable here.
 
 
 The credentials for the Web Service Application would work like ..
