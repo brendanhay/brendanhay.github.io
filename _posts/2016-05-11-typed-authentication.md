@@ -21,6 +21,8 @@ A contrived example of this usage for storing/retrieving the same object to
 Google Storage is:
 
 {% highlight haskell %}
+{-# LANGUAGE OverloadedStrings #-}
+
 import Control.Lens                 ((?~))
 import Control.Monad.Trans.Resource (runResourceT)
 import Data.Function                ((&))
@@ -30,9 +32,9 @@ import Network.Google.Storage       (objectsGet, objectsInsert, oiName)
 main :: IO
 main = do
     let file = "/tmp/file-path.xz"
-        key  = Text.pack file
-        obj  = object' & objContentType ?~ "application/octet-stream"
         bkt  = "storage-bucket"
+        key  = "/prefix/key"
+        obj  = object' & objContentType ?~ "application/octet-stream"
 
     -- Which credentials are retrieved is determined identically
     -- to the other Google SDKs by the following 'newEnv' call:
