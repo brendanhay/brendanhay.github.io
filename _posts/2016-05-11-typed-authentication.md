@@ -38,7 +38,7 @@ main = do
 
     -- Which credentials are retrieved is determined identically
     -- to the other Google SDKs by the following 'newEnv' call:
-    env  <- newEnv -- Credentials are retrieved here.
+    env  <- newEnv
     body <- sourceBody file
 
     runResourceT . runGoogle env $ do
