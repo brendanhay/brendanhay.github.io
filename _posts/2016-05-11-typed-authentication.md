@@ -14,10 +14,10 @@ libraries, you would supply the credentials to the top-level
 function (which unwraps the
 [`Google`](https://github.com/brendanhay/gogol/blob/0.0.1/gogol/src/Network/Google.hs#L119)
 monad) and any remote API operations performed within that context would be
-assumed to have the correct scopes authorised, otherwise a runtime error from
+assumed to have the correct scopes authorised, otherwise a run-time error from
 the remote API denoting forbidden or invalid access-levels would be raised.
 
-A contrived example of this usage for uploading/downling the same object to
+A contrived example of this usage for storing/retrieving the same object to
 Google Storage is:
 
 {% highlight haskell %}
