@@ -150,7 +150,7 @@ abbr[title] {
 /* Code */
 code,
 pre {
-  font-family: Menlo, Monaco, "Courier New", monospace;
+  font-family: "Input Mono", "Source Code Pro", Monaco, Consolas, "Courier New", monospace;
 }
 code {
   padding: .25em .25em .1em .25em;
@@ -191,7 +191,7 @@ pre code {
 
 /* Gist via GitHub Pages */
 .gist .gist-file {
-  font-family: Menlo, Monaco, "Courier New", monospace !important;
+  font-family: "Input Mono", "Source Code Pro", Monaco, Consolas, "Courier New", monospace;
 }
 .gist .markdown-body {
   padding: 15px;
