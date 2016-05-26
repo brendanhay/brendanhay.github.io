@@ -92,11 +92,11 @@ instance ToRequest DeleteObject where
 newtype Code  = Code  ByteString deriving (Eq, Show, IsString)
 newtype Token = Token ByteString
 
-authorise :: Token -> Request -> Request
-authorise (Token t) rq = rq
-    { requestHeaders =
-        (HTTP.hAuthorization, "Bearer: " <> t)
-            : filter ((HTTP.hAuthorization /=) . fst) (requestHeaders rq)
+authorise :: Request -> Token -> Request
+authorise rq (Token t) = rq
+    { Client.requestHeaders =
+        (HTTP.hAuthorization, LBS.toStrict ("Bearer: " <> t))
+            : filter ((HTTP.hAuthorization /=) . fst) (Client.requestHeaders rq)
     }
 
 data Client = Client
@@ -159,9 +159,9 @@ runContext = flip runReaderT
 
 send :: ToRequest a => a -> Context (Response ByteString)
 send x = do
-    m <- asks manager
-    t <- asks token
-    lift $ Client.httpLbs (authorise t (toRequest x)) m
+    rq <- asks (authorise (toRequest x) . token)
+    m  <- asks manager
+    lift (Client.httpLbs rq m)
 
 exampleReadWrite :: Client -> IO ()
 exampleReadWrite c = do
@@ -169,7 +169,7 @@ exampleReadWrite c = do
     n <- redirectPrompt c [readWrite, readOnly]
     t <- exchangeCode c n m
 
-    runContext (Env t m) $ do
+    runContext (Env m t) $ do
         let bucket  = "bucket"
             key     = "object/key/payload.txt"
             payload = "foo"
