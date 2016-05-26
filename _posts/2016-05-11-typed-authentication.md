@@ -350,7 +350,7 @@ with its respective scopes:
 
 {% highlight haskell %}
 class ToRequest a where
-    type Scopes = [Symbol]
+    type Scopes :: [Symbol]
 
     toRequest :: a -> Request
 {% endhighlight %}
