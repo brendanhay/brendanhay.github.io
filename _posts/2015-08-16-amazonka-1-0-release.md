@@ -31,7 +31,7 @@ no particular order.
 * TOC
 {:toc}
 
-### Errors
+## Errors
 
 Previously the individual services either had a service-specific error type such as `EC2Error`,
 a generated type, or shared one of the `RESTError` or `XMLError` types.
@@ -81,7 +81,7 @@ library's main service interface `Network.AWS.<ServiceName>` to see what error
 matchers are available.
 
 
-### Free Monad
+## Free Monad
 
 The core logic of sending requests, retrieving EC2 metadata and presigning are
 now provided by interpretations for a free monad. This works by the regular functions
@@ -92,7 +92,7 @@ This allows for mocking AWS logic in your program by replacing any `runAWS` or
 `runAWST` call with a custom interpretation of the `FreeT Command` AST.
 
 
-### Network.AWS vs Control.Monad.Trans.AWS
+## Network.AWS vs Control.Monad.Trans.AWS
 
 Due to the previously mentioned changes to `Error` and `ExceptT` usage, the surface
 API for the main modules offered by the `amazonka` library have changed somewhat.
@@ -113,7 +113,7 @@ turn is built upon `Network.AWS.Free`. All of these modules are exposed and most
 of the functions compose with respect to `MonadFree Command m` constraints.
 
 
-### Authentication
+## Authentication
 
 The mechanisms for supplying AuthN/AuthZ information have minor changes to
 make the library consistent with the official AWS SDKs.
@@ -148,7 +148,7 @@ You can read more information about the standard AWS credential mechanisms on
 the [AWS security blog](http://blogs.aws.amazon.com/security/post/Tx3D6U6WSFGOK2H/A-New-and-Standardized-Way-to-Manage-Credentials-in-the-AWS-SDKs).
 
 
-### Configuring Requests
+## Configuring Requests
 
 [Service](https://github.com/brendanhay/amazonka/blob/c4c56a06b9ff7c2b7d168fedd337037a5a8d34ba/core/src/Network/AWS/Types.hs#L325-L334)
 configuration such as endpoints or timeouts can be overridden per request via the
@@ -168,7 +168,7 @@ to do this for one or more actions in the form of:
 
 
 
-### Field Naming
+## Field Naming
 
 The way lens prefixes are generated has been completely re-implemented. This is for a number
 of reasons such as stability of ordering, stability of a historically selected
@@ -183,7 +183,7 @@ Both of these are breaking changes, but are considerably more future proof than
 the previous implementation.
 
 
-### Generator
+## Generator
 
 The previous generator predominantly used textual template rendering to emit
 Haskell declarations and a fair amount of logic was tied up in templating code.
@@ -196,7 +196,7 @@ of formatting to tools like `hindent` and `stylish-haskell`.
 As an artifact of these changes, it is now considerably slower. :)
 
 
-### Additional Services
+## Additional Services
 
 Since the initial public release of Amazonka, an additional 12 libraries have
 been added to the suite, consisting of:
@@ -218,7 +218,7 @@ Many of these libraries have only been tested for trivial cases (as in, operatio
 and feedback is needed from users to continue to improve the APIs.
 
 
-### Miscellaneous Changes
+## Miscellaneous Changes
 
 * More consistent documentation.
 * Removal of pre-release warnings.
@@ -237,14 +237,14 @@ and feedback is needed from users to continue to improve the APIs.
   as if every module was `.Internal`.
 
 
-### Supported GHC Versions
+## Supported GHC Versions
 
 The currently supported GHC versions are `7.8.4` and `7.10`, built against
 stackage `lts-2.*` and `nightly-*` respectively. The libraries will probably
 work on `7.6.3` as well, but active testing is not done for reasons of personal scale.
 
 
-### Cabal vs Stack
+## Cabal vs Stack
 
 In place of `cabal sandbox`, `stack` is now used for all development due to the
 multi-lib nature of the project. This has been a huge improvement to my

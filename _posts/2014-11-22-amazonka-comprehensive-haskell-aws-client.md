@@ -20,7 +20,7 @@ Haskell offers plenty of mechanisms for limiting boilerplate and these generally
 * TOC
 {:toc}
 
-### Status Quo
+## Status Quo
 
 As a concrete example, In early 2013 we decided to exclusively use [Amazon Web Services](http://aws.amazon.com/) for our entire infrastructure. Coupled with the fact that all of our backend/infrastructure related code is written in Haskell, the lack of comprehensive and consistent AWS libraries proved to be a problem.
 
@@ -43,7 +43,7 @@ In some of these implementations the supported feature set is incomplete and app
 
 This results in a subpar experience relative to [Python](https://github.com/boto/boto), [Ruby](https://github.com/aws/aws-sdk-ruby), [Java](https://github.com/aws/aws-sdk-java/), or [.NET](https://github.com/aws/aws-sdk-net/), for which there are official SDKs.
 
-### A Comprehensive Haskell AWS Client
+## A Comprehensive Haskell AWS Client
 
 After coming to the realisation in late 2012 - early 2013, that there were no Haskell libraries supporting the services we wished to use, I went down the route of providing a stopgap solution so we could begin building our infrastructure without having to compromise our language choice. This yielded a code generation Frankenstein which crawled the AWS documentation HTML, available SOAP definitions, and XSDs to provide AutoScaling, EC2, IAM, S3, CloudWatch, Route53, and ELB bindings.
 
@@ -113,7 +113,7 @@ In the following topics I'll briefly highlight some of the features and potentia
 > 
 > I'm relying on the brave to offer up constructive feedback via [GitHub Issues](https://github.com/brendanhay/amazonka/issues) since the scope is too much for me to test in practice, alone.
 
-### Liptstick on a Pig
+## Liptstick on a Pig
 
 Since the definitions appear to be generated from Java-style services, the corresponding AST and type information follows similar Object Oriented naming conventions and class level nesting.
 
@@ -123,7 +123,7 @@ Despite these points, I feel the advantages of providing types which strictly im
 
 The intent is to provide a more low-level interface which corresponds `1:1` with the actual API, and let people supply their own lipstick.
 
-### Lenses and Roles
+## Lenses and Roles
 
 Amazon utilises a number of different de/serialisation mechanisms ranging from the venerable XML and JSON, to more esoteric querystring serialisation of datatypes, and I inevitably ran up against the prototypical `newtype` explosion when avoiding orphan instances due to the heavy usage of type classes.
 
@@ -189,7 +189,7 @@ The following links provide detailed explanations of Roles and their implementat
 *   ICFP 2014 [Safe Coercions](http://www.cis.upenn.edu/~eir/papers/2014/coercible/coercible-ext.pdf) [PDF]
 *   GHC specific [implementation notes](https://ghc.haskell.org/trac/ghc/wiki/RolesImplementation).
 
-### Smart Constructors
+## Smart Constructors
 
 Providing the minimum number of parameters to satisfy construction of a valid request is desirable for succinctness, as opposed to comprehensively specifying every field of the underlying record.
 
@@ -226,7 +226,7 @@ Is equivalent to:
 
 </div>
 
-### Type Families
+## Type Families
 
 Type families are used to associate service errors, signing algorithms, and responses with requests.
 
@@ -266,7 +266,7 @@ Or more concretely:
 
 This works well in practice provided the user is familiar with type families, due to the slightly more arcane type signatures and error messages.
 
-### Documentation for Free
+## Documentation for Free
 
 The service definitions contain reasonably comprehensive documentation which allows us to include the actual AWS reference alongside a majority of the fields and operations.
 
@@ -284,7 +284,7 @@ Take for example this response lens from [GenerateDataKey](http://brendanhay.git
 
 Currently links and other markup are stripped, but in future I hope to convert it directly to Haddock and retain all of the supplied documentation in a fashion similar to the [official SDKs](https://github.com/aws/aws-sdk-net/blob/e2c3dfccea246ce9e0d23eace45cdca42a5eb6fd/AWSSDK_DotNet35/Amazon.AutoScaling/Model/AttachInstancesRequest.cs#L30).
 
-### One Library per Service
+## One Library per Service
 
 To illustrate the large nature of the codebase, everybody's favourite productivity measurer `cloc` shows:
 
@@ -300,7 +300,7 @@ Since you generally do not depend on every service simultaneously, forcing users
 
 Despite the maintenance overheads, cabal versioning, and potential discovery problems, encapsulating the code along service boundaries results in a much better user experience.
 
-### Conclusion
+## Conclusion
 
 While generating code may not yield the same user friendliness as hand written code in every case, it seems to scale very well for this particular class of problem.
 

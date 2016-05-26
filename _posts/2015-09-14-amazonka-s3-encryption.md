@@ -21,7 +21,7 @@ official AWS SDKs, specifically the Java AWS SDK. Haddock documentation is avail
 * TOC
 {:toc}
 
-### Chunked Encoding
+## Chunked Encoding
 
 The version 4 signing algorithm supports two modes for signing requests when communicating
 with S3. The first requires a `SHA256` hash of the payload to calculate
@@ -74,7 +74,7 @@ if performance and allocations are a concern.
 [documentation](http://brendanhay.nz/amazonka-doc/amazonka-s3-encryption/index.html).
 
 
-### Encryption and Decryption
+## Encryption and Decryption
 
 Client-side encryption of S3 objects is used to securely and safely store sensitive
 data in S3. When using client-side encryption, the data is encrypted _before_ it
@@ -112,7 +112,7 @@ to decrypt the object data.
 to avoid having to store and manage your own master keys.
 
 
-### Instruction Files
+## Instruction Files
 
 By default, the metadata (known as an envelope) required for encryption
 (except for the master key itself) is stored as S3 object metadata on the encrypted
@@ -126,7 +126,7 @@ a `<your-object-key>.instruction` object if the related `*Instruction` suffixed
 functions are used.
 
 
-### Compatibility and Status
+## Compatibility and Status
 
 Metadata and instruction envelopes are designed to be compatible with the
 official Java AWS SDK (both V1 and V2 formats), but only a limited set of the possible

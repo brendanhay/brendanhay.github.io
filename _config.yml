@@ -4,6 +4,7 @@ gems:
 kramdown:
   input: GFM
   hard_wrap: false
+  toc_levels: "2"
 # Permalinks
 permalink:        pretty
 # Setup

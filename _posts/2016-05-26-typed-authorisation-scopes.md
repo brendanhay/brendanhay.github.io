@@ -20,7 +20,12 @@ Google's Services, Haskell and general HTTP API communication are made.
 This is a minimal version of what will be released as part of
 [gogol-0.2](http://hackage.haskell.org/package/gogol).
 
-# Status Quo
+<h2>Contents</h2>
+* TOC
+{:toc}
+
+
+## Introduction
 
 Previously in the [`gogol`](http://hackage.haskell.org/packages/#cat:Google)
 libraries, you would supply the credentials to the top-level
@@ -84,7 +89,8 @@ that having strongly typed scopes could mitigate some classes of invalid credent
 least self-document the authorisation requirements a particular segment of
 code has.
 
-# An Oversimplification of the Domain
+
+## An Oversimplification of the Domain
 
 To illustrate usage of OAuth scopes for authorization purposes, we'll use a
 faux Google Storage API. This simplified API will have 3 operations, each requiring a different scope:
@@ -105,7 +111,7 @@ can then be used to retrieve either the metadata or payload using the same objec
 For our example, we'll just assume a streaming payload with no metadata where each
 operation address an storage bucket and object prefix/key.
 
-## Credentials
+### Credentials
 
 Our faux API's authentication and authorisation will model the real API as closely
 as possible. We'll assume credentials were created in the [Google Developers Console](https://console.developers.google.com/apis/credentials)
@@ -126,7 +132,7 @@ data Client = Client
 > The **Other** credentials type is used so we do not have to serve a callback URI
 to obtain the authorisation code.
 
-## Operations
+### Operations
 
 The common parameters for each operation can be modelled as newtypes with a
 utility function `objectPath` to encode the full Google Storage path to an object
@@ -160,7 +166,7 @@ a smart constructor and defaulting the rest proves more palatable. A real-world 
 be found
 [here](https://github.com/brendanhay/gogol/blob/0.0.1/gogol-container/gen/Network/Google/Resource/Container/Projects/Zones/Clusters/Create.hs#L80-L143).
 
-## Scopes
+### Scopes
 
 Similarly, an OAuth2 scope and the specific set we require for our faux Google Storage API
 can be represented as:
@@ -270,7 +276,8 @@ authorise (Token t) rq = rq
 Assuming the planets align and horrors of the internet lie dormant, we now have a
 valid access token to perform API requests for the authorised scopes.
 
-# Common Request Context and Environment
+
+## Common Request Environment
 
 > TODO: .. this adhoc overloading is improper - what about laws etc?
 
@@ -343,7 +350,7 @@ was authorised with the correct scopes for all three operations above? That is, 
 *or* both `readOnly` and `readWrite` should have been authorised else
 an error will occur when the example is run.
 
-# Annotating Requests with Required Scopes
+## Annotating Requests with Required Scopes
 
 Since we know the scopes each respective request within a given `Context` requires,
 how can we ensure the user is prompted with the correct scopes to authorise?
@@ -386,7 +393,7 @@ The associated type-level list of symbols is used to represent a 'set' of scopes
 of which _one_ (preferrably with the least privilege) is required.
 
 
-# Promotion of Scopes
+## Promotion of Scopes
 
 .. by Parameterising the `Token`, `Env`, and `Context` over the list of scopes
 that were used to form the authorisation URL.
@@ -431,7 +438,8 @@ redirectPrompt :: GetScopes s => Client                       -> IO (Code  s)
 exchangeCode   ::                Client -> Code  s -> Manager -> IO (Token s)
 {% endhighlight %}
 
-# Ensuring Correspondence
+
+## Ensuring Correspondence
 
 Unfortunately, despite having the ability to infer the correct authorisation
 URL based on the type of `Token` and `Env`, there is still a piece missing,
@@ -505,7 +513,7 @@ error will occur during compilation:
 > TODO: Note about the additional supported credential types in the `gogol-0.2` release.
 
 
-# Future Improvements (Give Me a Lift in Your Delorean)
+## Future Improvements (Give Me a Lift in Your Delorean)
 
 Having to explicitly annotate `Env` with the set of scopes seems superfluous, it'd
 be nice to have the compiler infer the type of `Env`.
@@ -516,10 +524,10 @@ least priviledged set of scopes is used would also be an interesting possible
 improvement.
 
 
-# TL;DR
+## TL;DR
 
 
-# Aside: Google's Use of OAuth2
+## Aside: Google's Use of OAuth2
 
 Google secures their public facing APIs using [OAuth2](https://developers.google.com/identity/protocols/OAuth2).
 
