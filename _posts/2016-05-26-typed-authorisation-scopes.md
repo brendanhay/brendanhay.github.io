@@ -258,11 +258,11 @@ exchangeCode c m (Code code) =
 The `Token` can then be added to an HTTP `Request` by inserting the `Authorization` header:
 
 {% highlight haskell %}
-authorise :: Token -> Request -> Request
-authorise (Token t) rq = rq
-    { requestHeaders =
-        (HTTP.hAuthorization, "Bearer: " <> t)
-            : filter ((HTTP.hAuthorization /=) . fst) (requestHeaders rq)
+authorise :: Request -> Token -> Request
+authorise rq (Token t) = rq
+    { Client.requestHeaders =
+        (HTTP.hAuthorization, LBS.toStrict ("Bearer: " <> t))
+            : filter ((HTTP.hAuthorization /=) . fst) (Client.requestHeaders rq)
     }
 {% endhighlight %}
 
@@ -313,9 +313,9 @@ send our operation data types and receive a raw HTTP response for `2xx` status c
 {% highlight haskell %}
 send :: ToRequest a => a -> Context (Response ByteString)
 send x = do
-    m <- asks manager
-    t <- asks token
-    lift $ Client.httpLbs (authorise t (toRequest x)) m
+    rq <- asks (authorise (toRequest x) . token)
+    m  <- asks manager
+    lift (Client.httpLbs rq m)
 {% endhighlight %}
 
 When then tyes nicely into the following example:
@@ -456,11 +456,17 @@ type family (∈) a b where
     (∈) x (y ': xs) = x == y || x ∈ xs
 {% endhighlight %}
 
+> TODO: Add note about how use of `HasScope` vs `HasScope'` emits nicer errors
+due to the reduction (or lack thereof) of the LHS vs RHS.
+
 The result of `HasScope` is a `Constraint`, which can be used directly on `send`:
 
 {% highlight haskell %}
 send :: (ToRequest a, HasScope s a) => a -> Context s (Response ByteString)
-send x = asks manager >>= lift . Client.httpLbs (toRequest x)
+send x = do
+    m <- asks manager
+    t <- asks token
+    lift $ Client.httpLbs (authorise t (toRequest x)) m
 {% endhighlight %}
 
 This updates the example to:
