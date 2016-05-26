@@ -25,17 +25,17 @@ This is a minimal version of what will be released as part of
 Previously in the [`gogol`](http://hackage.haskell.org/packages/#cat:Google)
 libraries, you would supply the credentials to the top-level
 [`runGoogle`](https://github.com/brendanhay/gogol/blob/0.0.1/gogol/src/Network/Google.hs#L174-L176)
-function (which unwraps the
+function which unwraps the
 [`Google`](https://github.com/brendanhay/gogol/blob/0.0.1/gogol/src/Network/Google.hs#L119)
-monad) and any remote API operations performed within that context would be
-assumed to have the correct scopes authorised, otherwise a run-time error from
-the remote API denoting forbidden or invalid access-levels would be raised.
+monad and any remote API operations performed within that context would be
+assumed to have the correct scopes authorised, else a run-time error from
+the API denoting forbidden or invalid access-levels would be raised.
 
 > A short introduction to Google's use of OAuth2 can be read at the [bottom of this
 article](#aside-googles-use-of-oauth2).
 
-A contrived example of this usage for storing/retrieving the same object with
-the Google Cloud Storage API (referred to herein as Google Storage) is:
+A contrived example of storing/retrieving an object using the Google Cloud
+Storage API (referred to herein as Google Storage) is:
 
 {% highlight haskell %}
 {-# LANGUAGE OverloadedStrings #-}

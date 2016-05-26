@@ -7,7 +7,7 @@ categories:
 ---
 
 After 4 months, nearly 900 commits and an inordinate number of `ExitFailure (-9)`
-build errors, version `1.0` of the Haskell [Amazonka](http://hackage.haskell.org/packages/#cat:AWS)
+build errors, version 1.0 of the Haskell [Amazonka](https://hackage.haskell.org/packages/#cat:AWS)
 AWS SDK has been released.
 
 Some of the features include significant changes to the underlying
