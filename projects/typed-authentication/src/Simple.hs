@@ -1,5 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RecordWildCards            #-}
 
 -- |
 -- Module      : Simple
@@ -16,7 +17,7 @@ module Simple where
 
 import           Control.Monad              (unless, void)
 import           Control.Monad.Trans.Class  (lift)
-import           Control.Monad.Trans.Reader (ReaderT (..), asks)
+import           Control.Monad.Trans.Reader (ReaderT (..), ask)
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Builder    as Build
 import           Data.ByteString.Lazy       (ByteString)
@@ -92,11 +93,12 @@ instance ToRequest DeleteObject where
 newtype Code  = Code  ByteString deriving (Eq, Show, IsString)
 newtype Token = Token ByteString
 
-authorise :: Request -> Token -> Request
-authorise rq (Token t) = rq
+authorise :: Token -> Request -> Request
+authorise (Token t) rq = rq
     { Client.requestHeaders =
         (HTTP.hAuthorization, LBS.toStrict ("Bearer: " <> t))
-            : filter ((HTTP.hAuthorization /=) . fst) (Client.requestHeaders rq)
+            : filter ((HTTP.hAuthorization /=) . fst)
+                     (Client.requestHeaders rq)
     }
 
 data Client = Client
@@ -159,9 +161,8 @@ runContext = flip runReaderT
 
 send :: ToRequest a => a -> Context (Response ByteString)
 send x = do
-    rq <- asks (authorise (toRequest x) . token)
-    m  <- asks manager
-    lift (Client.httpLbs rq m)
+    Env {..} <- ask
+    lift $ Client.httpLbs (authorise token (toRequest x)) manager
 
 exampleReadWrite :: Client -> IO ()
 exampleReadWrite c = do

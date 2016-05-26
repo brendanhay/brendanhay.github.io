@@ -258,11 +258,12 @@ exchangeCode c m (Code code) =
 The `Token` can then be added to an HTTP `Request` by inserting the `Authorization` header:
 
 {% highlight haskell %}
-authorise :: Request -> Token -> Request
-authorise rq (Token t) = rq
+authorise :: Token -> Request -> Request
+authorise (Token t) rq = rq
     { Client.requestHeaders =
         (HTTP.hAuthorization, LBS.toStrict ("Bearer: " <> t))
-            : filter ((HTTP.hAuthorization /=) . fst) (Client.requestHeaders rq)
+            : filter ((HTTP.hAuthorization /=) . fst)
+                     (Client.requestHeaders rq)
     }
 {% endhighlight %}
 
@@ -271,7 +272,7 @@ valid access token to perform API requests for the authorised scopes.
 
 # Common Request Context and Environment
 
-.. this adhoc overloading is improper - what about laws etc?
+> TODO: .. this adhoc overloading is improper - what about laws etc?
 
 To provide a uniform interface for serialisation of our operation datatypes
 into HTTP requests, a typeclass is introduced and an instance for each operation
@@ -283,17 +284,20 @@ class ToRequest a where
 
 instance ToRequest GetObject where
     toRequest (GetObject bkt key) =
-        def { Client.method = "GET"
+        def { Client.secure = True
+            , Client.host   = "https://www.googleapis.com"
+            , Client.method = "GET"
             , Client.path   = objectPath bkt key
             }
 ...
 {% endhighlight %}
 
-Performing HTTP requests using [http-client](#) requires the use of a
-connection manager. This `Manager` and the valid exchanged `Token` will be used
-to send a request containing the operation parameters and some additional
-authentication information. This common environment can be made available through
-use of a `ReaderT` to keep things tidy:
+Performing HTTP requests using
+[http-client](https://hackage.haskell.org/package/http-client) requires the use
+of a connection manager. This `Manager` and the valid exchanged `Token` will be
+used to send a request containing the operation parameters and some additional
+authentication information. This common environment can be made available
+through use of a `ReaderT` to keep things tidy:
 
 {% highlight haskell %}
 data Env = Env
@@ -313,9 +317,8 @@ send our operation data types and receive a raw HTTP response for `2xx` status c
 {% highlight haskell %}
 send :: ToRequest a => a -> Context (Response ByteString)
 send x = do
-    rq <- asks (authorise (toRequest x) . token)
-    m  <- asks manager
-    lift (Client.httpLbs rq m)
+    Env {..} <- ask
+    lift $ Client.httpLbs (authorise token (toRequest x)) manager
 {% endhighlight %}
 
 When then tyes nicely into the following example:
@@ -497,8 +500,9 @@ error will occur during compilation:
 {% endhighlight %}
 
 
+> TODO: Define some combinators to avoid ScopedTypeVariables.
 
-> Note about the additional supported credential types in the `gogol-0.2` release.
+> TODO: Note about the additional supported credential types in the `gogol-0.2` release.
 
 
 # Future Improvements (Give Me a Lift in Your Delorean)

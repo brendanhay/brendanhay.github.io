@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE RecordWildCards                  #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE PolyKinds                  #-}
@@ -30,7 +31,7 @@ import           Data.Type.Bool               (type (||))
 import           Data.Type.Equality           (type (==))
 import GHC.Exts (Constraint)
 import           Control.Monad.Trans.Class  (lift)
-import           Control.Monad.Trans.Reader (ReaderT (..), asks)
+import           Control.Monad.Trans.Reader (ReaderT (..), ask)
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Builder    as Build
 import           Data.ByteString.Lazy       (ByteString)
@@ -112,11 +113,12 @@ instance ToRequest DeleteObject where
 newtype Code  s = Code  ByteString deriving (Eq, Show, IsString)
 newtype Token s = Token ByteString
 
-authorise :: Token -> Request -> Request
+authorise :: Token s -> Request -> Request
 authorise (Token t) rq = rq
-    { requestHeaders =
-        (HTTP.hAuthorization, "Bearer: " <> t)
-            : filter ((HTTP.hAuthorization /=) . fst) (requestHeaders rq)
+    { Client.requestHeaders =
+        (HTTP.hAuthorization, LBS.toStrict ("Bearer: " <> t))
+            : filter ((HTTP.hAuthorization /=) . fst)
+                     (Client.requestHeaders rq)
     }
 
 data Client = Client
@@ -205,7 +207,9 @@ type family (++) xs ys where
     (++) (x ': xs) ys = x ': (xs ++ ys)
 
 send :: (ToRequest a, HasScope s a) => a -> Context s (Response ByteString)
-send x = asks manager >>= lift . Client.httpLbs (toRequest x)
+send x = do
+    Env {..} <- ask
+    lift $ Client.httpLbs (authorise token (toRequest x)) manager
 
 exampleReadWrite :: Client -> IO ()
 exampleReadWrite c = do
@@ -213,7 +217,7 @@ exampleReadWrite c = do
     n <- redirectPrompt c
     t <- exchangeCode c n m
 
-    let env = Env c t m :: Env '[ReadWrite, ReadOnly]
+    let env = Env m t :: Env '[ReadWrite, ReadOnly]
 
     runContext env $ do
         let bucket  = "bucket"
@@ -229,7 +233,7 @@ exampleDelete c = do
     n <- redirectPrompt c
     t <- exchangeCode c n m
 
-    let env = Env c t m :: Env '[FullControl]
+    let env = Env m t :: Env '[FullControl]
 
     runContext env $ do
         let bucket  = "bucket"
