@@ -27,14 +27,19 @@ This is a minimal version of what will be released as part of
 
 ## Introduction
 
-Previously in the [`gogol`](http://hackage.haskell.org/packages/#cat:Google)
-libraries, you would supply the credentials to the top-level
+Previously in the [`gogol-*`](http://hackage.haskell.org/packages/#cat:Google)
+libraries, you would supply credentials to the top-level
 [`runGoogle`](https://github.com/brendanhay/gogol/blob/0.0.1/gogol/src/Network/Google.hs#L174-L176)
-function which unwraps the
+function which ran the
 [`Google`](https://github.com/brendanhay/gogol/blob/0.0.1/gogol/src/Network/Google.hs#L119)
-monad and any remote API operations performed within that context would be
-assumed to have the correct scopes authorised, else a run-time error from
-the API denoting forbidden or invalid access-levels would be raised.
+monad and any remote API operations performed would be assumed to have the correct authorisation scopes,
+else a run-time error from the API denoting forbidden or invalid access-levels would be raised.
+
+> TODO: make the following more descriptive/specific.
+
+This led to error prone ways to form the required OAuth2 flow URLs
+to authorise the particular scopes that were used within a particular `runGoogle`
+context.
 
 > A short introduction to Google's use of OAuth2 can be read at the [bottom of this
 article](#aside-googles-use-of-oauth2).
@@ -111,7 +116,8 @@ can then be used to retrieve either the metadata or payload using the same objec
 For our example, we'll just assume a streaming payload with no metadata where each
 operation address an storage bucket and object prefix/key.
 
-### Credentials
+
+### Defining Credentials
 
 Our faux API's authentication and authorisation will model the real API as closely
 as possible. We'll assume credentials were created in the [Google Developers Console](https://console.developers.google.com/apis/credentials)
@@ -132,7 +138,8 @@ data Client = Client
 > The **Other** credentials type is used so we do not have to serve a callback URI
 to obtain the authorisation code.
 
-### Operations
+
+### Defining Operations
 
 The common parameters for each operation can be modelled as newtypes with a
 utility function `objectPath` to encode the full Google Storage path to an object
@@ -166,7 +173,8 @@ a smart constructor and defaulting the rest proves more palatable. A real-world 
 be found
 [here](https://github.com/brendanhay/gogol/blob/0.0.1/gogol-container/gen/Network/Google/Resource/Container/Projects/Zones/Clusters/Create.hs#L80-L143).
 
-### Scopes
+
+### Defining Scopes
 
 Similarly, an OAuth2 scope and the specific set we require for our faux Google Storage API
 can be represented as:
@@ -277,7 +285,7 @@ Assuming the planets align and horrors of the internet lie dormant, we now have 
 valid access token to perform API requests for the authorised scopes.
 
 
-## Common Request Environment
+## A Common Request Environment
 
 > TODO: .. this adhoc overloading is improper - what about laws etc?
 
@@ -350,7 +358,7 @@ was authorised with the correct scopes for all three operations above? That is, 
 *or* both `readOnly` and `readWrite` should have been authorised else
 an error will occur when the example is run.
 
-## Annotating Requests with Required Scopes
+## Associating Requests with Their Respective Scopes
 
 Since we know the scopes each respective request within a given `Context` requires,
 how can we ensure the user is prompted with the correct scopes to authorise?
