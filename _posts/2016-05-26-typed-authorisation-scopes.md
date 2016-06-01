@@ -2,6 +2,10 @@
 draft: true
 layout: post
 title: Typed Authorisation Scopes
+categories:
+  - Google
+  - Haskell
+  - OAuth
 ---
 
 **DRAFT**

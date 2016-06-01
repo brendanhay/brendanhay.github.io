@@ -3,7 +3,7 @@ layout: post
 title: S3 Encryption Addons
 categories:
   - Cryptography
-  - AWS
+  - Amazon
   - Haskell
 ---
 

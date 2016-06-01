@@ -2,7 +2,7 @@
 layout: post
 title: The Boredom of Authoring an API Client
 categories:
-  - AWS
+  - Amazon
   - Haskell
 ---
 

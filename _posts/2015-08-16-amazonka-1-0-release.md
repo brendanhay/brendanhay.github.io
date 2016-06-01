@@ -2,7 +2,7 @@
 layout: post
 title: Amazonka 1.0 Released
 categories:
-  - AWS
+  - Amazon
   - Haskell
 ---
 
