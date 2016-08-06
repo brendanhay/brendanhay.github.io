@@ -15,10 +15,10 @@ This post explores a small example of using Haskell's type system, specifically
 [type-level literals](singletons), and
 [type-level lists](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#promoted-list-and-tuple-types))
 to implement compile-time checks that your supplied Google's OAuth2 credentials
-have the required authorisation scopes for a particular monadic context.
+have the required authorisation scopes within a particular context.
 
-Various assumptions about you, the reader, include familiarity with
-Google's Services, Haskell and general HTTP API communication are made.
+Various assumptions about you, the reader, are made including familiarity with
+Google's Services, Haskell and general HTTP communication.
 
 > You can find the entire code example as a runnable [stack](http://docs.haskellstack.org/) project [here](https://github.com/brendanhay/brendanhay.github.io/tree/master/projects/typed-authentication).
 This is a minimal version of what will be released as part of
@@ -221,13 +221,8 @@ queryEncodeScopes =
     . coerce
 {% endhighlight %}
 
-Pasting the URL created by `formURL` into your browser, will prompt you to authorise
-the specified scopes for the given client identifier:
 
-<img src="/public/images/typed-authentication/authorisation.png" />
-
-Clicking **Allow** will display an OAuth code that can be copied and pasted back into our toy application
-via the following data type and a simple `IO` helper using `getLine`:
+> TODO: describe
 
 {% highlight haskell %}
 newtype Code = Code ByteString deriving (Eq, Show, IsString)
@@ -243,6 +238,14 @@ redirectPrompt c ss = do
     putStrLn "Please input the authorisation code: "
     Code . LBS.fromStrict <$> BS.getLine
 {% endhighlight %}
+
+Pasting the URL created by `formURL` into your browser, will prompt you to authorise
+the specified scopes for the given client identifier:
+
+<img src="/public/images/typed-authentication/authorisation.png" />
+
+Clicking **Allow** will display an OAuth code that can be copied and pasted back into our toy application
+via the following data type and a simple `IO` helper using `getLine`:
 
 This `Code` can then be exchanged along with the `Client` secret to obtain a
 valid access token:
@@ -442,7 +445,7 @@ instance (KnownSymbol x, GetScopes xs) => GetScopes (x ': xs) where
         scope = Scope . LBS8.pack . symbolVal
 {% endhighlight %}
 
-This changes the signatures used to do the OAuth danse macabre to:
+This changes the signatures of the OAuth danse macabre to:
 
 {% highlight haskell %}
 formURL        :: GetScopes s => Client -> Proxy s            -> ByteString
