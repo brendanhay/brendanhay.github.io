@@ -7,6 +7,8 @@ categories:
   - Amazon
 ---
 
+**DRAFT**
+
 Today I'd like to announce the release of a new Haskell library named
 [credentials](https://hackage.haskell.org/package/credentials), which allows
 you to securely retrieve shared encrypted credentials (secrets) from within your
