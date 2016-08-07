@@ -257,7 +257,7 @@ please see the following references for detailed explanations:
 * [Encrypt-then-MAC](http://www.daemonology.net/blog/2009-06-24-encrypt-then-mac.html)
 
 
-## Usage
+## Basic Usage
 
 You will need your AWS credentials available in either the standard
 `~/.aws/credentials` file, or as `AWS_ACCESS_KEY_ID` and
@@ -297,7 +297,7 @@ It's recommended you allow only the minimal set of permissions as your usecase
 requires.
 
 
-### Basic CLI Commands
+### CLI Commands
 
 Installation of the CLI can be achieved by either `cabal
 install credentials-cli` or `stack install credentials-cli`. This will
