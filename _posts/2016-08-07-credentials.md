@@ -65,7 +65,7 @@ Some of the features of the library and CLI include:
 
 In the following sections, I will go into detail about the use of KMS, DynamoDB,
 and the actual encryption routine. If you just want to know how to use the library
-or CLI, skip ahead to the [Usage](#usage) section.
+or CLI, skip ahead to the [Basic Usage](#basic-usage) section.
 
 ## Key Management Service
 
