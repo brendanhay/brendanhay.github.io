@@ -14,9 +14,10 @@ Haskell applications. An administration CLI has also been released which allows
 you to manage the credentials or access them from non-Haskell applications.
 
 This work is based on Fugue's [credstash](https://github.com/fugue/credstash)
-and is similar to HashiCorp's [vault](https://github.com/hashicorp/vault), albeit simplified.
-It was motivated by work with my previous colleagues at [Fugue](https://fugue.co),
-and a desire for similar functionally directly embeddable as a library in Haskell.
+and is similar to HashiCorp's [vault](https://github.com/hashicorp/vault),
+albeit with a simplified feature set.  It was motivated by work with my
+previous colleagues at [Fugue](https://fugue.co), and a desire for similar
+functionally directly embeddable as a library in Haskell.
 
 <h2>Contents</h2>
 * TOC
@@ -47,8 +48,9 @@ The [credentials](https://hackage.haskell.org/package/credentials) library
 is designed to rely on a minimal number of moving parts that are as close
 to operations-free as possible.
 
-In addition there is also a CLI, [credentials-cli](https://hackage.haskell.org/package/credentials-cli),
-which can be used to setup the necessary DynamoDB table and administer your stored credentials.
+[credentials-cli](https://hackage.haskell.org/package/credentials-cli) has also
+been released, which is an administration CLI that can be used to setup the
+necessary DynamoDB table and administer your stored credentials.
 
 Some of the features of the library and CLI include:
 
@@ -112,10 +114,14 @@ API operation:
 3. Use the data key to encrypt your data locally.
 4. Use KMS to encrypt the data key with the specified master key. This is called
    key wrapping, and the encrypted data is now called a "wrapped key".
-5. Store the encrypted data and the wrapped key.  Note: this is not "encraption"
-   (the practice of storing a key next to the data that it protects), because
-   without access to the master key that wraps the data key, the data key is
-   useless. It is an opaque blob.
+5. Store the encrypted data and the wrapped key.
+
+For point 5 above, it's important to point out the concept of "encraption" from [Alex Schoof](https://blog.fugue.co/2015-04-21-aws-kms-secrets.html):
+
+> Note: this is not "encraption"
+(the practice of storing a key next to the data that it protects), because
+without access to the master key that wraps the data key, the data key is
+useless. It is an opaque blob.
 
 To decrypt the data, we now:
 
@@ -187,9 +193,7 @@ Amazon Identity and Access Management (IAM) features, for example:
     - Grant only KMS `GenerateDataKey` and DynamoDB `Query` to read only users.
 
 
-## Encryption Routine
-
--- TODO: Investigate using DataKeySpec instead of manually specifying number of bytes
+## Cryptographic Routines
 
 The encryption routine can be condensed into the following Haskell code:
 
@@ -201,40 +205,59 @@ The encryption routine can be condensed into the following Haskell code:
 -- Then we split the plaintext key into two 32 byte parts, one is used
 -- to initialise the block cipher and the other is to compute an
 -- HMAC of the encrypted ciphertext.
-(dataKey, hmacKey) = ByteString.splitAt 32 plaintextKey
+let (dataKey, hmacKey) = ByteString.splitAt (32 bytes) plaintextKey
 
 -- A random nonce is generated to something about how this needs to be unique
 -- for each encryption input to the ctr operation.
-nonce  <- generateRandomBytes (16 bytes)
-output <- ctrCombine (AES128 dataKey) (IV nonce) input
-digest <- hmac hmacKey output
+nonce      <- generateRandomBytes (16 bytes)
+ciphertext <- ctrCombine (AES256 dataKey) (IV nonce) plaintext
+digest     <- hmac hmacKey ciphertext
 
 -- The following components are all stored in the storage backend,
 -- and are made available to the decryption routine.
 return ( nonce         -- The IV used to initialise the AES cipher.
        , ciphertextKey -- The encrypted data key from generateDataKey.
-       , output        -- The resulting encrypted ciphertext.
+       , ciphertext    -- The resulting encrypted ciphertext.
        , digest        -- A digest used to check ciphertext integrity.
        )
 ```
 
-It's important to make note of a few things here:
+A couple of the important points above to make note of:
 
 1. A randomly generated initialisation vector (IV).
-2. An AES128 block cipher running in CTR mode.
+2. An AES256 block cipher running in CTR mode.
 3. Generating an HMAC digest of the encrypted ciphertext (Encrypt-then-MAC).
 
-> There exists debate around the use of a random IV in relation to CTR mode vs CBC mode,
-and likewise using an Encrypt-then-MAC scheme vs an authenticated block cipher mode.
-See the following references for detailed explanations:
+Decryption is then as follows (with the variables corresponding to those above):
+
+```haskell
+-- We call KMS to decrypt the wrapped key.
+plaintextKey <- KMS.decrypt ciphertextKey
+
+-- Again split the plaintext key into it's sub-parts.
+let (dataKey, hmacKey) = ByteString.splitAt 32 plaintextKey
+    expected           = hmac hmacKey ciphertext
+
+-- Assert the integrity of the ciphertext by calculating and
+-- comparing a new HMAC digest.
+unless (expected == digest) $
+    throwM IntegrityFailure
+
+-- Perform decryption of the ciphertext.
+plaintext <- ctrCombine (AES256 dataKey) (IV nonce) ciphertext
+
+return plaintext
+```
+
+If you'd like to read some of the reasoning for selecting CTR mode vs CBC mode,
+and likewise using an Encrypt-then-MAC scheme vs an authenticated block cipher mode,
+please see the following references for detailed explanations:
 
 * [Cryptographic Right Answers](http://www.daemonology.net/blog/2009-06-11-cryptographic-right-answers.html)
 * [Encrypt-then-MAC](http://www.daemonology.net/blog/2009-06-24-encrypt-then-mac.html)
 
 
 ## Usage
-
-### Prerequisites
 
 You will need your AWS credentials available in either the standard
 `~/.aws/credentials` file, or as `AWS_ACCESS_KEY_ID` and
@@ -247,6 +270,8 @@ Identity and Access Management section of the Amazon developer's console:
 
 If you are likely to be using only one master key initially, it's recommended to
 create a new key with the alias `credentials`, as that is what the tooling defaults to.
+
+### Permissions
 
 The complete list of AWS KMS and DynamoDB permissions the various operations will
 require are:
@@ -262,7 +287,7 @@ require are:
     - `Query`
     - `PutItem`
 * Select and decrypt an existing credential revision:
-    - `GenerateDataKey`
+    - `Decrypt`
     - `Query`
 * Deletion of a credential revision, or revisions:
     - `Query`
@@ -270,6 +295,7 @@ require are:
 
 It's recommended you allow only the minimal set of permissions as your usecase
 requires.
+
 
 ### Basic CLI Commands
 
@@ -286,7 +312,6 @@ Setting up dynamo:///credentials in eu-central-1.
 Running ...
 dynamo://dynamodb.eu-central-1.amazonaws.com:443/credentials:
   status: created
-Done.
 ```
 
 ```
@@ -295,7 +320,6 @@ Writing new revision of foo to dynamo:///credentials in eu-central-1...
 dynamo://dynamodb.eu-central-1.amazonaws.com:443/credentials:
   name: foo
   revision: 82687c4
-Done.
 ```
 
 ```
@@ -304,7 +328,6 @@ Listing contents of dynamo:///credentials in eu-central-1...
 dynamo://dynamodb.eu-central-1.amazonaws.com:443/credentials:
   foo:
       - 82687c4 # latest
-Done.
 ```
 
 ```
@@ -314,11 +337,11 @@ dynamo://dynamodb.eu-central-1.amazonaws.com:443/credentials:
   name: foo
   revision: 82687c4
   secret: A magical secret.
-Done.
 ```
 
 Additional means of formatting the output and logging suitable for use in shell scripts is
 available, see the `--help` text for more information.
+
 
 ### Library API
 
@@ -334,18 +357,14 @@ which for the default DynamoDB backend looks as follows:
 ```haskell
 newtype DynamoDB a = DynamoDB { runDynamo :: AWS a }
 
-newtype Table = Table Text
-newtype Name  = Name  Text
-
 setup     :: Table -> DynamoDB Setup
 teardown  :: Table -> DynamoDB ()
 revisions :: Table -> Conduit.Source DynamoDB (Name, NonEmpty Revision)
-delete    :: Name  -> Maybe Revision -> Table -> DynamoDB ()
 
 insert :: KeyId
        -> Context
        -> Name
-       -> ByteString
+       -> Plaintext
        -> Table
        -> DynamoDB Revision
 
@@ -353,7 +372,12 @@ select :: Context
        -> Name
        -> Maybe Revision
        -> Table
-       -> DynamoDB (ByteString, Revision)
+       -> DynamoDB (Plaintext, Revision)
+
+delete :: Name
+       -> Maybe Revision
+       -> Table
+       -> DynamoDB ()
 ```
 
 Please see the [source](https://github.com/brendanhay/credentials) or
