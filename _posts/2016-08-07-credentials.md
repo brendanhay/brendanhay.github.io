@@ -271,38 +271,13 @@ Identity and Access Management section of the Amazon developer's console:
 If you are likely to be using only one master key initially, it's recommended to
 create a new key with the alias `credentials`, as that is what the tooling defaults to.
 
-### Permissions
-
-The complete list of AWS KMS and DynamoDB permissions the various operations will
-require are:
-
-* Setup and teardown:
-    - `CreateTable`
-    - `DestroyTable`
-    - `ListTables`
-* List credentials and revisions:
-    - `Scan`
-* Insert a new encrypted credential revision:
-    - `GenerateDataKey`
-    - `Query`
-    - `PutItem`
-* Select and decrypt an existing credential revision:
-    - `Decrypt`
-    - `Query`
-* Deletion of a credential revision, or revisions:
-    - `Query`
-    - `DeleteItem`
-
-It's recommended you allow only the minimal set of permissions as your usecase
-requires.
-
 
 ### CLI Commands
 
-Installation of the CLI can be achieved by either `cabal
-install credentials-cli` or `stack install credentials-cli`. This will
-installed an executable named `credentials` to either `cabal` or `stack`s
-preferred location.
+Installation of the CLI can be achieved by either `cabal install
+credentials-cli` or `stack install credentials-cli`. This will install an
+executable named `credentials` to either `cabal` or `stack`s preferred
+location.
 
 A basic example of using the CLI is as follows:
 
@@ -315,7 +290,7 @@ dynamo://dynamodb.eu-central-1.amazonaws.com:443/credentials:
 ```
 
 ```
-$ credentials put --name foo --secret "A magical secret."
+$ credentials insert --name foo --secret "A magical secret."
 Writing new revision of foo to dynamo:///credentials in eu-central-1...
 dynamo://dynamodb.eu-central-1.amazonaws.com:443/credentials:
   name: foo
@@ -327,11 +302,11 @@ $ credentials list
 Listing contents of dynamo:///credentials in eu-central-1...
 dynamo://dynamodb.eu-central-1.amazonaws.com:443/credentials:
   foo:
-      - 82687c4 # latest
+    - 82687c4 # latest
 ```
 
 ```
-$ credentials get --name foo
+$ credentials select --name foo
 Retrieving foo from dynamo:///credentials in eu-central-1...
 dynamo://dynamodb.eu-central-1.amazonaws.com:443/credentials:
   name: foo
@@ -374,7 +349,7 @@ select :: Context
        -> Table
        -> DynamoDB (Plaintext, Revision)
 
-delete :: Name
+pdelete :: Name
        -> Maybe Revision
        -> Table
        -> DynamoDB ()
