@@ -1,7 +1,7 @@
 ---
 draft: true
 layout: post
-title: Managing Secure Credentials
+title: Secure Shared Credentials
 categories:
   - Haskell
   - Amazon
