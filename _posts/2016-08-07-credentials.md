@@ -189,8 +189,8 @@ Amazon Identity and Access Management (IAM) features, for example:
   http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/specifying-conditions.html).
 * Limiting the API operations a specific AWS user may perform:
     - Grant DynamoDB `CreateTable` and `DeleteTable` only to administrators.
-    - Grant KMS `GenerateDataKey` and DynamoDB `Query` / `PutItem` to power users.
-    - Grant only KMS `GenerateDataKey` and DynamoDB `Query` to read only users.
+    - Grant KMS `GenerateDataKey` and DynamoDB `PutItem` to power users.
+    - Grant only KMS `Decrypt` and DynamoDB `Query` to read only users.
 
 
 ## Cryptographic Routines
@@ -320,40 +320,19 @@ available, see the `--help` text for more information.
 
 ### Library API
 
-Once the KMS master key and DynamoDB table (via `credentials setup`) exists,
+Once the KMS master key and DynamoDB table (via `credentials setup`) exist,
 you can use the `credentials` library by adding it to the `build-depends`
 section of your project's cabal file. The AWS credentials used for
 authentication and authorisation are discovered by the underlying
 [amazonaka](github.com/brendanhay/amazonka) library.
 
-The basic API is defined as part of a type classes resembling the storage interface,
-which for the default DynamoDB backend looks as follows:
+The following example retrieves a Heroku Postgres database connection string
+containing a sensitive password, when a webserver starts:
 
 ```haskell
-newtype DynamoDB a = DynamoDB { runDynamo :: AWS a }
-
-setup     :: Table -> DynamoDB Setup
-teardown  :: Table -> DynamoDB ()
-revisions :: Table -> Conduit.Source DynamoDB (Name, NonEmpty Revision)
-
-insert :: KeyId
-       -> Context
-       -> Name
-       -> Plaintext
-       -> Table
-       -> DynamoDB Revision
-
-select :: Context
-       -> Name
-       -> Maybe Revision
-       -> Table
-       -> DynamoDB (Plaintext, Revision)
-
-pdelete :: Name
-       -> Maybe Revision
-       -> Table
-       -> DynamoDB ()
+TODO
 ```
+
 
 Please see the [source](https://github.com/brendanhay/credentials) or
 [documentation](https://hackage.haskell.org/package/credentials) for more
