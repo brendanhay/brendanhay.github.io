@@ -55,7 +55,7 @@ Some of the features of the library and CLI include:
 * Means for verifying data integrity.
 * Sharing of credentials.
 * Centralised management of credentials, such as creation, deletion, and querying.
-* Revokation.
+* Revocation.
 * Granular access control of all facets of the system.
 
 What follows is a slightly whirlwind tour of the use of KMS, DynamoDB,
@@ -72,11 +72,11 @@ all credentials themselves are also compromised.
 
 Secure administration and usage of the master keys is a difficult problem
 typically requiring a solution such as dedicated Hardware Security Modules
-(HSMs) to support features like revokation, renewal, and replacement.
+(HSMs) to support features like revocation, renewal, and replacement.
 
 KMS provides a programmatic API resembling a remote HSM. It offers a number of
 useful features such as centralised key management, secure storage, key renewal
-and revokation, as well as auditing via
+and revocation, as well as auditing via
 [CloudTrail](https://aws.amazon.com/cloudtrail). This means the master key
 we'll use is stored in secure HSM-backed storage and never leaves the KMS
 service.
