@@ -63,6 +63,7 @@ Some of the features of the library and CLI include:
 What follows is a slightly whirlwind tour of the use of KMS, DynamoDB,
 and the actual encryption routines.
 
+
 ## Key Management Service
 
 Encryption and decryption of credentials use a master encryption
@@ -172,7 +173,7 @@ To hide this from the end user we'll instead return an opaque revision which can
 used along with the name as part of an efficient secondary index query.
 
 
-## AWS Service Pricing
+## Service Pricing
 
 A single master key in KMS costs $1 USD per month. The DynamoDB table throughput
 is configured to use 1 provisioned read and 1 provisioned write, so if you are using
@@ -182,11 +183,15 @@ charges will apply.
 If you are likely to utilise much more than 25 reads/writes per second, you
 can estimate your monthly charges by using the [AWS pricing calculator](http://calculator.s3.amazonaws.com/index.html#s=DYNAMODB).
 
+> TL;DR, $1 USD per month for the predicted usecase.
+
 
 ## Identity and Access Management
 
 Granular access control of this scheme can be controlled via standard
-Amazon Identity and Access Management (IAM) features, for example:
+Amazon Identity and Access Management (IAM) features.
+
+Some examples include:
 
 * Restriction of KMS master keys, such as production vs development.
 * Restriction of different DynamoDB credential tables, such as production vs
@@ -196,6 +201,10 @@ Amazon Identity and Access Management (IAM) features, for example:
     - Grant DynamoDB `CreateTable` and `DeleteTable` only to administrators.
     - Grant KMS `GenerateDataKey` and DynamoDB `PutItem` to power users.
     - Grant only KMS `Decrypt` and DynamoDB `Query` to read only users.
+
+IAM offers alot of granularity and power at the expense of being confusing
+for the uninitiated. A couple of canned IAM policies are provided in the
+[README](https://github.com/brendanhay/credentials#iam-policies) to help you get started.
 
 
 ## Cryptographic Routines
@@ -213,7 +222,7 @@ The encryption routine can be condensed into the following Haskell code:
 let (dataKey, hmacKey) = ByteString.splitAt (32 bytes) plaintextKey
 
 -- A random nonce is generated to something about how this needs to be unique
--- for each encryption input to the ctr operation.
+-- for each encryption input to the CTR operation.
 nonce      <- generateRandomBytes (16 bytes)
 ciphertext <- ctrCombine (AES256 dataKey) (IV nonce) plaintext
 digest     <- hmac hmacKey ciphertext
