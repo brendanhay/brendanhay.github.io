@@ -324,7 +324,7 @@ Once the KMS master key and DynamoDB table (via `credentials setup`) exist,
 you can use the `credentials` library by adding it to the `build-depends`
 section of your project's cabal file. The AWS credentials used for
 authentication and authorisation are discovered by the underlying
-[amazonaka](github.com/brendanhay/amazonka) library.
+[amazonka](github.com/brendanhay/amazonka) library.
 
 The following example retrieves a database connection string
 containing a sensitive password, when a webserver starts. It's worth pointing
