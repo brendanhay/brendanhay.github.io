@@ -173,19 +173,6 @@ To hide this from the end user we'll instead return an opaque revision which can
 used along with the name as part of an efficient secondary index query.
 
 
-## Service Pricing
-
-A single master key in KMS costs $1 USD per month. The DynamoDB table throughput
-is configured to use 1 provisioned read and 1 provisioned write, so if you are using
-less than the free tier limit of 25 reads and 25 writes per second, only the KMS
-charges will apply.
-
-If you are likely to utilise much more than 25 reads/writes per second, you
-can estimate your monthly charges by using the [AWS pricing calculator](http://calculator.s3.amazonaws.com/index.html#s=DYNAMODB).
-
-> TL;DR, $1 USD per month for the predicted usecase.
-
-
 ## Identity and Access Management
 
 Granular access control of this scheme can be controlled via standard
@@ -396,6 +383,32 @@ Hopefully this illustrates the simple, transparent nature of retrieving encrypte
 credentials. Please see the [README](https://github.com/brendanhay/credentials) or
 [documentation](https://hackage.haskell.org/package/credentials) for more
 information.
+
+
+## Service Pricing
+
+A single master key in KMS costs $1 USD per month. The DynamoDB table throughput
+is configured to use 1 provisioned read and 1 provisioned write, so if you are using
+less than the free tier limit of 25 reads and 25 writes per second, only the KMS
+charges will apply.
+
+If you are likely to utilise much more than 25 reads/writes per second, you
+can estimate your monthly charges by using the [AWS pricing calculator](http://calculator.s3.amazonaws.com/index.html#s=DYNAMODB).
+
+> TL;DR, $1 USD per month for the predicted usecase.
+
+
+## Service Pricing
+
+A single master key in KMS costs $1 USD per month. The DynamoDB table throughput
+is configured to use 1 provisioned read and 1 provisioned write, so if you are using
+less than the free tier limit of 25 reads and 25 writes per second, only the KMS
+charges will apply.
+
+If you are likely to utilise much more than 25 reads/writes per second, you
+can estimate your monthly charges by using the [AWS pricing calculator](http://calculator.s3.amazonaws.com/index.html#s=DYNAMODB).
+
+> TL;DR, $1 USD per month for the predicted usecase.
 
 
 ## Future Work
