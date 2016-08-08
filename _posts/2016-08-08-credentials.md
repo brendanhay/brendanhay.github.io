@@ -161,7 +161,7 @@ we'll use the following Optimistic Locking strategy:
    to obtain the latest version for name.
 2. Increment the version.
 3. Generate a unique revision based on the current timestamp and desired version.
-3. Attempt to insert with a conditional check that causes the insert to only succeed
+3. Attempt to insert with a conditional check that will only allow the insert to succeed
    if the result would be the desired version exists _with the exact revision_ we just generated.
 4. On `ConditionalCheckFailedException` error response, delay and then retry by
    returning to step 1, otherwise exit successfully
