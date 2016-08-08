@@ -33,26 +33,21 @@ environment such as AWS, you typically need access to a multitude of secrets
 such as database credentials, API keys for external third parties, or
 credentials for inter-service communication with our micro-service overlords.
 
-For example, typical use cases might consist of:
+One concrete example is to retrieve a database connection URI such as
+`postgresql://domain.com/production?user=fred&password=secret` when a web
+application server starts. Since this connection URI is the gateway to your data
+- it needs to be stored as securely as the data it protects.
 
-* Retrieve a database connection URI such as
-  `postgresql://domain.com/production?user=fred&password=secret` when a web
-  application server starts.
-* Retrieve a GitHub access token to push source code from an internal
-  continuous integration server.
+The [credentials](https://hackage.haskell.org/package/credentials) library and
+the related [credentials-cli](https://hackage.haskell.org/package/credentials-cli) are
+a simple and secure solution to this problem, designed to rely on a minimal number of
+external dependencies that are as close to operations-free as possible.
 
-In this post I'll introduce the `credentials` library and some of the considerations
-for managing secure storage of credentials, as well as the specific use of
-Amazon's [Key Management Service (KMS)](http://aws.amazon.com/kms/) and
-[DynamoDB](http://aws.amazon.com/dynamodb/).
-
-The [credentials](https://hackage.haskell.org/package/credentials) library
-is designed to rely on a minimal number of moving parts that are as close
-to operations-free as possible.
-
-[credentials-cli](https://hackage.haskell.org/package/credentials-cli) has also
-been released, which is an administration CLI that can be used to setup the
-necessary DynamoDB table and administer your stored credentials.
+It uses Amazon's [Key Management Service (KMS)](http://aws.amazon.com/kms/) for
+master key management, performs all encryption locally, and then stores
+encryption parameters and metadata in
+[DynamoDB](http://aws.amazon.com/dynamodb/) to facilitate sharing and
+administration.
 
 Some of the features of the library and CLI include:
 
@@ -166,6 +161,9 @@ we'll use the following Optimistic Locking strategy:
 2. Increment the version.
 3. Attempt to insert with a conditional check that the incremented version for the name
    doesn't exist.
+   
+   -- Something about revision being used to check Expected (ver <> rev) exist
+   
 4. On `ConditionalCheckFailedException` error response, delay and then retry by
    returning to step 1, otherwise exit successfully
 
@@ -206,7 +204,7 @@ The encryption routine can be condensed into the following Haskell code:
 
 -- Then we split the plaintext key into two 32 byte parts, one is used
 -- to initialise the block cipher and the other is to compute an
--- HMAC of the encrypted ciphertext.
+-- HMAC SHA256 of the encrypted ciphertext.
 let (dataKey, hmacKey) = ByteString.splitAt (32 bytes) plaintextKey
 
 -- A random nonce is generated to something about how this needs to be unique
@@ -241,7 +239,7 @@ let (dataKey, hmacKey) = ByteString.splitAt 32 plaintextKey
     expected           = hmac hmacKey ciphertext
 
 -- Assert the integrity of the ciphertext by calculating and
--- comparing a new HMAC digest.
+-- comparing a new HMAC SHA256 digest.
 unless (expected == digest) $
     throwM IntegrityFailure
 
@@ -328,13 +326,54 @@ section of your project's cabal file. The AWS credentials used for
 authentication and authorisation are discovered by the underlying
 [amazonaka](github.com/brendanhay/amazonka) library.
 
-The following example retrieves a Heroku Postgres database connection string
-containing a sensitive password, when a webserver starts:
+The following example retrieves a database connection string
+containing a sensitive password, when a webserver starts. It's worth pointing
+out the setup all pertains to the underlying `amazonka` library, since all of
+the `credentials` operations run in the `MonadAWS` monad.
 
 ```haskell
-TODO
-```
+{-# LANGUAGE OverloadedStrings #-}
 
+import Control.Lens
+
+import Credentials
+
+import Data.ByteString (ByteString)
+
+import Network.AWS
+import Network.Wai              (Application)
+import Network.Wai.Handler.Warp (run)
+
+import System.IO (stdout)
+
+main :: IO
+main = do
+    -- A new 'Logger' to replace the default noop logger is created,
+    -- which will print AWS debug information and errors to stdout.
+    lgr <- newLogger Debug stdout
+
+    -- A new amazonka 'Env' is created, which auto-discovers the
+    -- underlying host credentials.
+    env <- newEnv Frankfurt Discover
+
+    let table = Credentials.defaultTable
+        key   = Credentials.defaultKeyId
+        name  = "secret-database-uri"
+
+    -- We now run the 'AWS' computation with the overriden logger,
+    -- performing sequence credentials operation(s).
+    -- For 'select', the plaintext and corresponding revision is returned.
+    (uri, _) <- runResourceT . runAWS (env & envLogger .~ lgr) $ do
+        -- Selecting the credential by name, and specifying 'Nothing' for the
+        -- revision results in the latest revision of the credential.
+        Credentials.select mempty name Nothing table
+
+    -- We can now connect to the database using our sensitive connection URI.
+    run 3000 (app uri)
+
+app :: ByteString -> Application
+app uri rq f = ...
+```
 
 Please see the [source](https://github.com/brendanhay/credentials) or
 [documentation](https://hackage.haskell.org/package/credentials) for more
