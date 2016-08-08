@@ -398,19 +398,6 @@ can estimate your monthly charges by using the [AWS pricing calculator](http://c
 > TL;DR, $1 USD per month for the predicted usecase.
 
 
-## Service Pricing
-
-A single master key in KMS costs $1 USD per month. The DynamoDB table throughput
-is configured to use 1 provisioned read and 1 provisioned write, so if you are using
-less than the free tier limit of 25 reads and 25 writes per second, only the KMS
-charges will apply.
-
-If you are likely to utilise much more than 25 reads/writes per second, you
-can estimate your monthly charges by using the [AWS pricing calculator](http://calculator.s3.amazonaws.com/index.html#s=DYNAMODB).
-
-> TL;DR, $1 USD per month for the predicted usecase.
-
-
 ## Future Work
 
 * Leases and temporary credentials as well as access expiry.
