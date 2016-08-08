@@ -7,8 +7,6 @@ categories:
   - Amazon
 ---
 
-**DRAFT**
-
 Today I'd like to announce the release of a new Haskell library named
 [credentials](https://hackage.haskell.org/package/credentials), which allows
 you to securely share encrypted credentials (secrets) from within your
@@ -16,8 +14,8 @@ Haskell applications. An administration CLI has also been released which allows
 you to manage the credentials or access them from non-Haskell applications.
 
 This work is based on Fugue's [credstash](https://github.com/fugue/credstash)
-and is similar to HashiCorp's [vault](https://github.com/hashicorp/vault),
-albeit with a simplified feature set.  It was motivated by work with my
+and is similar in concept to HashiCorp's [vault](https://github.com/hashicorp/vault),
+with a simplified feature set.  It was motivated by work with my
 previous colleagues at [Fugue](https://fugue.co), and a desire for similar
 functionally directly embeddable as a library in Haskell.
 
@@ -60,9 +58,10 @@ Some of the features of the library and CLI include:
 * Revokation.
 * Granular access control of all facets of the system.
 
-In the following sections, I will go into detail about the use of KMS, DynamoDB,
-and the actual encryption routine. If you just want to know how to use the library
-or CLI, skip ahead to the [Basic Usage](#basic-usage) section.
+What follows is a slightly whirlwind tour of the use of KMS, DynamoDB,
+and the actual encryption routines. If you just want to know how to use the library
+or CLI, skip ahead to the [Usage](#usage) section.
+
 
 ## Key Management Service
 
@@ -78,7 +77,9 @@ typically requiring a solution such as dedicated Hardware Security Modules
 KMS provides a programmatic API resembling a remote HSM. It offers a number of
 useful features such as centralised key management, secure storage, key renewal
 and revokation, as well as auditing via
-[CloudTrail](https://aws.amazon.com/cloudtrail).
+[CloudTrail](https://aws.amazon.com/cloudtrail). This means the master key
+we'll use is stored in secure HSM-backed storage and never leaves the KMS
+service.
 
 One basic model using the
 [Encrypt](http://docs.aws.amazon.com/kms/latest/APIReference/API_Encrypt.html)
@@ -159,11 +160,9 @@ we'll use the following Optimistic Locking strategy:
    [strongly consistent read](http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html)
    to obtain the latest version for name.
 2. Increment the version.
-3. Attempt to insert with a conditional check that the incremented version for the name
-   doesn't exist.
-   
-   -- Something about revision being used to check Expected (ver <> rev) exist
-   
+3. Generate a unique revision based on the current timestamp and desired version.
+3. Attempt to insert with a conditional check that causes the insert to only succeed
+   if the result would be the desired version exists _with the exact revision_ we just generated.
 4. On `ConditionalCheckFailedException` error response, delay and then retry by
    returning to step 1, otherwise exit successfully
 
@@ -257,7 +256,7 @@ please see the following references for detailed explanations:
 * [Encrypt-then-MAC](http://www.daemonology.net/blog/2009-06-24-encrypt-then-mac.html)
 
 
-## Basic Usage
+## Usage
 
 You will need your AWS credentials available in either the standard
 `~/.aws/credentials` file, or as `AWS_ACCESS_KEY_ID` and
@@ -269,7 +268,7 @@ Identity and Access Management section of the Amazon developer's console:
 <img src="/public/images/credentials/encryption-keys-console.png" />
 
 If you are likely to be using only one master key initially, it's recommended to
-create a new key with the alias `credentials`, as that is what the tooling defaults to.
+create a new key with the alias `credentials`, as that is what the CLI defaults to.
 
 
 ### CLI Commands
@@ -329,7 +328,7 @@ authentication and authorisation are discovered by the underlying
 The following example retrieves a database connection string
 containing a sensitive password, when a webserver starts. It's worth pointing
 out the setup all pertains to the underlying `amazonka` library, since all of
-the `credentials` operations run in the `MonadAWS` monad.
+the `credentials` operations run in a `MonadAWS` context.
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}
@@ -375,7 +374,8 @@ app :: ByteString -> Application
 app uri rq f = ...
 ```
 
-Please see the [source](https://github.com/brendanhay/credentials) or
+Hopefully this illustrates the simple, transparent nature of retrieving encrypted
+credentials. Please see the [README](https://github.com/brendanhay/credentials) or
 [documentation](https://hackage.haskell.org/package/credentials) for more
 information.
 
