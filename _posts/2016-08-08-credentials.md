@@ -13,6 +13,9 @@ you to securely share encrypted credentials (secrets) from within your
 Haskell applications. An administration CLI has also been released which allows
 you to manage the credentials or access them from non-Haskell applications.
 
+If you just want to know how to use the library or CLI, skip ahead to the
+[Usage](#usage) section.
+
 This work is based on Fugue's [credstash](https://github.com/fugue/credstash)
 and is similar in concept to HashiCorp's [vault](https://github.com/hashicorp/vault),
 with a simplified feature set.  It was motivated by work with my
@@ -31,8 +34,8 @@ environment such as AWS, you typically need access to a multitude of secrets
 such as database credentials, API keys for external third parties, or
 credentials for inter-service communication with our micro-service overlords.
 
-One concrete example is to retrieve a database connection URI such as
-`postgresql://domain.com/production?user=fred&password=secret` when a web
+One concrete example would be to retrieve a database connection URI such as
+`postgresql://postgres.heroku.com/production?user=fred&password=secret` when a web
 application server starts. Since this connection URI is the gateway to your data
 - it needs to be stored as securely as the data it protects.
 
@@ -54,14 +57,11 @@ Some of the features of the library and CLI include:
 * Encrypted data in transit.
 * Means for verifying data integrity.
 * Sharing of credentials.
-* Centralised management of credentials, such as creation, deletion, and querying.
-* Revocation.
+* Management of credentials, such as creation, deletion, querying, and revocation.
 * Granular access control of all facets of the system.
 
 What follows is a slightly whirlwind tour of the use of KMS, DynamoDB,
-and the actual encryption routines. If you just want to know how to use the library
-or CLI, skip ahead to the [Usage](#usage) section.
-
+and the actual encryption routines.
 
 ## Key Management Service
 
@@ -132,8 +132,6 @@ KMS. These keys are not infact used for encryption of your actual data, but
 instead a single master key can be used to protect many data keys, which in
 turn are used to encrypt your actual data.
 
-> Current KMS charges are 1 USD per month for a single active master key.
-
 
 ## DynamoDB
 
@@ -173,8 +171,16 @@ non-monotonic if the latest is deleted, and will contain gaps if historical vers
 To hide this from the end user we'll instead return an opaque revision which can be
 used along with the name as part of an efficient secondary index query.
 
-> By default the library uses the minimum provisioned throughput when creating
-the DynamoDB table. This qualifies for the free usage tier.
+
+## AWS Service Pricing
+
+A single master key in KMS costs $1 USD per month. The DynamoDB table throughput
+is configured to use 1 provisioned read and 1 provisioned write, so if you are using
+less than the free tier limit of 25 reads and 25 writes per second, only the KMS
+charges will apply.
+
+If you are likely to utilise much more than 25 reads/writes per second, you
+can estimate your monthly charges by using the [AWS pricing calculator](http://calculator.s3.amazonaws.com/index.html#s=DYNAMODB).
 
 
 ## Identity and Access Management
@@ -260,15 +266,18 @@ please see the following references for detailed explanations:
 
 You will need your AWS credentials available in either the standard
 `~/.aws/credentials` file, or as `AWS_ACCESS_KEY_ID` and
-`AWS_SECRET_ACCESS_KEY` environment variables.
+`AWS_SECRET_ACCESS_KEY` environment variables if running on a local development
+machine. If running on an EC2 instance, the IAM role credentials will be
+retrieved from the instance metadata.
 
-You will also need to create a KMS master key under Encryption Keys in the
-Identity and Access Management section of the Amazon developer's console:
+A KMS master key should also be created. You can do this under Encryption Keys
+in the Identity and Access Management section of the Amazon developer's console:
 
 <img src="/public/images/credentials/encryption-keys-console.png" />
 
-If you are likely to be using only one master key initially, it's recommended to
-create a new key with the alias `credentials`, as that is what the CLI defaults to.
+If you are likely to be using only one master key initially, it's recommended
+to create a new key with the alias `credentials`, as that is what the CLI and
+library parameters default to.
 
 
 ### CLI Commands
