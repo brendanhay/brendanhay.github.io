@@ -7,7 +7,7 @@ categories:
   - Amazon
 ---
 
-Today I'd like to announce the release of a new Haskell library named
+I'd like to announce the release of a new Haskell library named
 [credentials](https://hackage.haskell.org/package/credentials), which allows
 you to securely share encrypted credentials (secrets) from within your
 Haskell applications. An administration CLI has also been released which allows
