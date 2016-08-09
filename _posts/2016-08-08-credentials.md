@@ -261,10 +261,10 @@ please see the following references for detailed explanations:
 ## Usage
 
 You will need your AWS credentials available in either the standard
-`~/.aws/credentials` file, or as `AWS_ACCESS_KEY_ID` and
+`~/.aws/credentials` file, or `AWS_ACCESS_KEY_ID` and
 `AWS_SECRET_ACCESS_KEY` environment variables if running on a local development
-machine. If running on an EC2 instance, the IAM role credentials will be
-retrieved from the instance metadata.
+machine. If you're running on an EC2 instance, the IAM role credentials will be
+retrieved from the instance metadata automatically.
 
 A KMS master key should also be created. You can do this under Encryption Keys
 in the Identity and Access Management section of the Amazon developer's console:
