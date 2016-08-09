@@ -16,11 +16,9 @@ you to manage the credentials or access them from non-Haskell applications.
 If you just want to know how to use the library or CLI, skip ahead to the
 [Usage](#usage) section.
 
-This work is based on Fugue's [credstash](https://github.com/fugue/credstash)
-and is similar in concept to HashiCorp's [vault](https://github.com/hashicorp/vault),
-with a simplified feature set.  It was motivated by work with my
-previous colleagues at [Fugue](https://fugue.co), and a desire for similar
-functionally directly embeddable as a library in Haskell.
+This work is based on [credstash](https://github.com/fugue/credstash) and was
+motivated by work with my previous colleagues at [Fugue](https://fugue.co), as well
+as a desire for similar functionally directly embeddable as a library in Haskell.
 
 <h2>Contents</h2>
 * TOC
