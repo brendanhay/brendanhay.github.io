@@ -218,15 +218,15 @@ The encryption routine can be condensed into the following Haskell code:
 -- HMAC SHA256 of the encrypted ciphertext.
 let (dataKey, hmacKey) = ByteString.splitAt (32 bytes) plaintextKey
 
--- A random nonce is generated to something about how this needs to be unique
--- for each encryption input to the CTR operation.
-nonce      <- generateRandomBytes (16 bytes)
-ciphertext <- ctrCombine (AES256 dataKey) (IV nonce) plaintext
+-- A random IV is generated, this needs to be unique for each encryption
+-- input to the CTR operation.
+iv         <- generateRandomBytes (16 bytes)
+ciphertext <- ctrCombine (AES256 dataKey) iv plaintext
 digest     <- hmac hmacKey ciphertext
 
 -- The following components are all stored in the storage backend,
 -- and are made available to the decryption routine.
-return ( nonce         -- The IV used to initialise the AES cipher.
+return ( iv            -- The IV used to initialise the AES cipher.
        , ciphertextKey -- The encrypted data key from generateDataKey.
        , ciphertext    -- The resulting encrypted ciphertext.
        , digest        -- A digest used to check ciphertext integrity.
@@ -255,7 +255,7 @@ unless (expected == digest) $
     throwM IntegrityFailure
 
 -- Perform decryption of the ciphertext.
-plaintext <- ctrCombine (AES256 dataKey) (IV nonce) ciphertext
+plaintext <- ctrCombine (AES256 dataKey) iv ciphertext
 
 return plaintext
 ```
