@@ -1,5 +1,4 @@
 ---
-draft: true
 layout: post
 title: Secure Shared Credentials
 categories:
