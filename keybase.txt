@@ -1,0 +1,55 @@
+==================================================================
+https://keybase.io/brendanhay
+--------------------------------------------------------------------
+
+I hereby claim:
+
+  * I am an admin of http://brendanhay.nz
+  * I am brendanhay (https://keybase.io/brendanhay) on keybase.
+  * I have a public key ASBepRJ5c1aqNDIttsfjKhWblNrWWMogjAppbnPnrnW8Hgo
+
+To do so, I am signing this object:
+
+{
+  "body": {
+    "key": {
+      "eldest_kid": "01205ea512797356aa34322db6c7e32a159b94dad658ca208c0a696e73e7ae75bc1e0a",
+      "host": "keybase.io",
+      "kid": "01205ea512797356aa34322db6c7e32a159b94dad658ca208c0a696e73e7ae75bc1e0a",
+      "uid": "16740cbffec142e0107a3df836c03719",
+      "username": "brendanhay"
+    },
+    "merkle_root": {
+      "ctime": 1513379717,
+      "hash": "66fd5bf7ec0d20de14005e3f0ad4e2ac0d2e82cdf8068b40d64dd8197bc2ea9ab7063a57767b7a694eda6249003f0dfff64943c99e056041458722a13e17324d",
+      "hash_meta": "5b038ef90d9f140519300aafbb7ae09f49199db103286ad57eebb72edc34e52f",
+      "seqno": 1825143
+    },
+    "service": {
+      "hostname": "brendanhay.nz",
+      "protocol": "http:"
+    },
+    "type": "web_service_binding",
+    "version": 1
+  },
+  "client": {
+    "name": "keybase.io go client",
+    "version": "1.0.37"
+  },
+  "ctime": 1513379735,
+  "expire_in": 504576000,
+  "prev": "ac76e743c3ead6b32698b2b96532de60af1f2bf18ad5f48e0c2785e211f87743",
+  "seqno": 9,
+  "tag": "signature"
+}
+
+which yields the signature:
+
+hKRib2R5hqhkZXRhY2hlZMOpaGFzaF90eXBlCqNrZXnEIwEgXqUSeXNWqjQyLbbH4yoVm5Ta1ljKIIwKaW5z5651vB4Kp3BheWxvYWTFA0Z7ImJvZHkiOnsia2V5Ijp7ImVsZGVzdF9raWQiOiIwMTIwNWVhNTEyNzk3MzU2YWEzNDMyMmRiNmM3ZTMyYTE1OWI5NGRhZDY1OGNhMjA4YzBhNjk2ZTczZTdhZTc1YmMxZTBhIiwiaG9zdCI6ImtleWJhc2UuaW8iLCJraWQiOiIwMTIwNWVhNTEyNzk3MzU2YWEzNDMyMmRiNmM3ZTMyYTE1OWI5NGRhZDY1OGNhMjA4YzBhNjk2ZTczZTdhZTc1YmMxZTBhIiwidWlkIjoiMTY3NDBjYmZmZWMxNDJlMDEwN2EzZGY4MzZjMDM3MTkiLCJ1c2VybmFtZSI6ImJyZW5kYW5oYXkifSwibWVya2xlX3Jvb3QiOnsiY3RpbWUiOjE1MTMzNzk3MTcsImhhc2giOiI2NmZkNWJmN2VjMGQyMGRlMTQwMDVlM2YwYWQ0ZTJhYzBkMmU4MmNkZjgwNjhiNDBkNjRkZDgxOTdiYzJlYTlhYjcwNjNhNTc3NjdiN2E2OTRlZGE2MjQ5MDAzZjBkZmZmNjQ5NDNjOTllMDU2MDQxNDU4NzIyYTEzZTE3MzI0ZCIsImhhc2hfbWV0YSI6IjViMDM4ZWY5MGQ5ZjE0MDUxOTMwMGFhZmJiN2FlMDlmNDkxOTlkYjEwMzI4NmFkNTdlZWJiNzJlZGMzNGU1MmYiLCJzZXFubyI6MTgyNTE0M30sInNlcnZpY2UiOnsiaG9zdG5hbWUiOiJicmVuZGFuaGF5Lm56IiwicHJvdG9jb2wiOiJodHRwOiJ9LCJ0eXBlIjoid2ViX3NlcnZpY2VfYmluZGluZyIsInZlcnNpb24iOjF9LCJjbGllbnQiOnsibmFtZSI6ImtleWJhc2UuaW8gZ28gY2xpZW50IiwidmVyc2lvbiI6IjEuMC4zNyJ9LCJjdGltZSI6MTUxMzM3OTczNSwiZXhwaXJlX2luIjo1MDQ1NzYwMDAsInByZXYiOiJhYzc2ZTc0M2MzZWFkNmIzMjY5OGIyYjk2NTMyZGU2MGFmMWYyYmYxOGFkNWY0OGUwYzI3ODVlMjExZjg3NzQzIiwic2Vxbm8iOjksInRhZyI6InNpZ25hdHVyZSJ9o3NpZ8RALZLhiQgL/oOKwPedVjoRK9omGHRO18EZXGKdtnTnYur0jnnULqRjJu3eueNaL26H9o3RQ4KbCM/otdthP/18CqhzaWdfdHlwZSCkaGFzaIKkdHlwZQildmFsdWXEIC6sDWveGa+G0KVXUya44o8BGhUUnGGkqaI3cnr9fZWwo3RhZ80CAqd2ZXJzaW9uAQ==
+
+And finally, I am proving ownership of this host by posting or
+appending to this document.
+
+View my publicly-auditable identity here: https://keybase.io/brendanhay
+
+==================================================================
